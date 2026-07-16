@@ -1,6 +1,5 @@
 <div align="center">
-  <img src="public/globe.svg" alt="Logo" width="80" height="80">
-  <h1 align="center">Kaal Bhairav OSINT Platform</h1>
+  <h1 align="center">🌎 Kaal Bhairav OSINT Platform</h1>
   <p align="center">
     <strong>Advanced MERN-based Open Source Intelligence & Surveillance Dashboard</strong>
   </p>
@@ -43,7 +42,7 @@ graph TD
     end
 
     subgraph API [Next.js API Routes - Backend]
-        Router[/api/* Endpoints]
+        Router["/api/* Endpoints"]
         Auth[Auth Controller]
         Search[Search Service]
         Surveillance[Surveillance Polling]
