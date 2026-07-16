@@ -3,15 +3,16 @@ import { connectDB } from "@/db";
 import { User, ActivityLog } from "@/db/schema";
 import bcrypt from "bcryptjs";
 import { signToken } from "@/lib/auth";
-
+import { LoginSchema } from "@/lib/validations";
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
-    const { username, password } = await req.json();
-
-    if (!username || !password) {
-      return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
+    const body = await req.json();
+    const parsed = LoginSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
+    const { username, password } = parsed.data;
 
     let user = await User.findOne({ username });
 

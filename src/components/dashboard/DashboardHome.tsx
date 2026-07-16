@@ -76,16 +76,26 @@ export default function DashboardHome() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/stats").then((r) => r.json()),
-      fetch("/api/feed").then((r) => r.json())
-    ])
-      .then(([statsRes, feedRes]) => {
+    fetch("/api/stats")
+      .then((r) => r.json())
+      .then((statsRes) => {
         setData(statsRes);
-        if (feedRes.success) setFeedData(feedRes.data.slice(0, 5));
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    // Connect to live SSE feed stream
+    const sse = new EventSource("/api/feed/stream");
+    sse.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.feed) {
+          setFeedData(payload.feed.slice(0, 5));
+        }
+      } catch (err) {}
+    };
+
+    return () => sse.close();
   }, []);
 
   const stats = data?.stats;

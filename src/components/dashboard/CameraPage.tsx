@@ -3,37 +3,38 @@ import { useState, useEffect } from "react";
 import { Video, Activity, Zap, Server, Settings, Focus, Minimize, Maximize, AlertTriangle, Crosshair, MapPin } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
 
+import { ICameraFeed, ISurveillanceEvent } from "@/types";
+
 export default function CameraPage() {
-  const [cameras, setCameras] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [cameras, setCameras] = useState<ICameraFeed[]>([]);
+  const [events, setEvents] = useState<ISurveillanceEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCam, setActiveCam] = useState<any | null>(null);
+  const [activeCam, setActiveCam] = useState<ICameraFeed | null>(null);
 
   useEffect(() => {
-    fetch("/api/surveillance")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setCameras(data.data.cameras);
-          setEvents(data.data.events);
-          if (data.data.cameras.length > 0) setActiveCam(data.data.cameras[0]);
-        }
-      })
-      .finally(() => setLoading(false));
+    const sse = new EventSource("/api/surveillance/stream");
 
-    // Simulate live events polling
-    const interval = setInterval(() => {
-      fetch("/api/surveillance")
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setCameras(data.data.cameras);
-            setEvents(data.data.events);
-          }
-        });
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
+    sse.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setCameras(data.cameras);
+        setEvents(data.events);
+        if (!activeCam && data.cameras.length > 0) {
+          setActiveCam(data.cameras[0]);
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error("SSE parse error", err);
+      }
+    };
+
+    sse.onerror = (err) => {
+      console.error("SSE Error:", err);
+      sse.close(); // Close on error to avoid infinite reconnect loops if auth fails
+    };
+
+    return () => sse.close();
+  }, [activeCam]);
 
   return (
     <div className="space-y-5 h-[calc(100vh-6rem)] flex flex-col">

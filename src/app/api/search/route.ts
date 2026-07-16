@@ -3,6 +3,8 @@ import { connectDB } from "@/db";
 import { SearchHistory, ActivityLog, OSINTResult } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 
+import { SearchSchema } from "@/lib/validations";
+
 export async function POST(req: NextRequest) {
   try {
     const auth = await getSession();
@@ -11,19 +13,18 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
-    const { query, queryType, investigationId } = await req.json();
+    const body = await req.json();
+    const parsed = SearchSchema.safeParse(body);
 
-    if (!query) {
-      return NextResponse.json({ error: "Query is required" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    // Fetch matching OSINT results from the database instead of generating mock ones
+    const { query, queryType, investigationId } = parsed.data;
+
+    // Fetch matching OSINT results using MongoDB Text Index for maximum performance
     let dbQuery: any = {
-      $or: [
-        { query: { $regex: new RegExp(query, "i") } },
-        { title: { $regex: new RegExp(query, "i") } },
-        { snippet: { $regex: new RegExp(query, "i") } }
-      ]
+      $text: { $search: query }
     };
     if (queryType && queryType !== "all") {
       dbQuery.queryType = queryType;

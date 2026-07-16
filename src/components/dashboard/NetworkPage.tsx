@@ -3,6 +3,8 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { Map, Globe, Shield, Radar, Wifi, Activity, Server, ArrowRight, Search, Info } from "lucide-react";
 import dynamic from "next/dynamic";
 
+import { INetworkNode, INetworkLink } from "@/types";
+
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false, loading: () => <div className="flex-1 min-h-[500px] flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div></div> });
 
 const NODE_COLORS: Record<string, { fill: string; stroke: string; text: string }> = {
@@ -22,10 +24,10 @@ const RISK_BADGE: Record<string, string> = {
 };
 
 export default function NetworkPage() {
-  const [nodes, setNodes] = useState<any[]>([]);
-  const [links, setLinks] = useState<any[]>([]);
+  const [nodes, setNodes] = useState<INetworkNode[]>([]);
+  const [links, setLinks] = useState<INetworkLink[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedNode, setSelectedNode] = useState<any | null>(null);
+  const [selectedNode, setSelectedNode] = useState<INetworkNode | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
@@ -42,7 +44,7 @@ export default function NetworkPage() {
   }, []);
 
   const { graphData, edges } = useMemo(() => {
-    const edgesList: Array<{ from: any; to: any }> = [];
+    const edgesList: Array<{ from: INetworkNode; to: INetworkNode }> = [];
     const seen = new Set<string>();
     
     const gNodes = nodes.map(n => ({ 
@@ -53,11 +55,14 @@ export default function NetworkPage() {
     const gLinks: Array<{ source: string; target: string }> = [];
 
     links.forEach((link) => {
-      const edgeKey = [link.source, link.target].sort().join("-");
+      const sourceStr = typeof link.source === "string" ? link.source : link.source.id;
+      const targetStr = typeof link.target === "string" ? link.target : link.target.id;
+      const edgeKey = [sourceStr, targetStr].sort().join("-");
+      
       if (!seen.has(edgeKey)) {
         seen.add(edgeKey);
-        const sourceNode = nodes.find(n => n.id === link.source);
-        const targetNode = nodes.find(n => n.id === link.target);
+        const sourceNode = nodes.find(n => n.id === sourceStr);
+        const targetNode = nodes.find(n => n.id === targetStr);
         if (sourceNode && targetNode) {
           edgesList.push({ from: sourceNode, to: targetNode });
           gLinks.push({ source: link.source, target: link.target });

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Radar, Wifi, Globe, Shield, AlertTriangle, Clock, Filter, RefreshCw, ExternalLink } from "lucide-react";
+import { IFeedItem } from "@/types";
 
 const CATEGORIES = ["All", "APT", "Breach", "Malware", "Vulnerability", "Phishing", "Botnet", "Intel"];
 
@@ -12,7 +13,7 @@ const SEVERITY_STYLES: Record<string, { badge: string; dot: string; bg: string }
 };
 
 export default function FeedPage() {
-  const [feedItems, setFeedItems] = useState<any[]>([]);
+  const [feedItems, setFeedItems] = useState<IFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
   const [isRefreshing, setIsRefreshing] = useState(false);

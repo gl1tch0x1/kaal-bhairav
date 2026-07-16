@@ -127,6 +127,9 @@ const OSINTResultSchema = new Schema({
   tags: [{ type: String }],
 });
 
+// Text index for robust search performance
+OSINTResultSchema.index({ query: "text", title: "text", snippet: "text" });
+
 const CameraFeedSchema = new Schema({
   name: { type: String, required: true },
   location: { type: String, required: true },
