@@ -26,7 +26,7 @@ It provides SOC analysts, threat hunters, and cyber-intelligence professionals w
 
 ## ✨ Key Features
 
-- **🕸️ OSINT & Web-Check Integration:** Transparently integrated intelligence aggregation combining Shodan, Censys, Whois, VirusTotal, and more into unified threat reports.
+- **🕸️ OSINT & Web-Check Integration:** Transparently integrated intelligence aggregation combining `web-check-api` (local network deployment) alongside crt.sh, Shodan, VirusTotal, AbuseIPDB, and AlienVault OTX with low-latency parallel fan-out queries and sub-second caching.
 - **🎥 Live Camera Intelligence Module:** Real-time CCTV streaming with multi-camera WebRTC/RTSP support, object/motion detection powered by a highly concurrent Rust processing engine.
 - **🗺️ Advanced Threat Mapping (GIS):** Professional threat intelligence maps utilizing MapLibre and Leaflet to visualize active incidents, malware campaigns, and asset telemetry.
 - **🤖 AI Security Copilot:** A multi-LLM (OpenAI, Claude, Llama) abstraction layer capable of interpreting threat data, summarizing investigations, and guiding incident response workflows via natural language.
@@ -74,10 +74,11 @@ graph TD
     %% Flow
     Client -- "REST / WebSocket" --> Gateway
     Gateway -- "gRPC" --> UserSvc
-    Gateway -- "gRPC" --> AssetSvc
     Gateway -- "gRPC" --> AICopilot
     Gateway -- "gRPC" --> CameraSvc
     Gateway -- "gRPC" --> OSINTSvc
+    Client -- "REST / POST" --> UI
+    UI -- "REST / POST" --> AssetSvc
     
     UserSvc -- "Pub/Sub" --> NATS
     AssetSvc -- "Pub/Sub" --> NATS
@@ -85,6 +86,7 @@ graph TD
     CameraSvc -- "Pub/Sub" --> NATS
 
     UserSvc -- "Mongoose" --> DB
+    UI -- "Mongoose" --> DB
     AssetSvc -- "Mongoose" --> DB
     Gateway -- "Cache" --> Redis
 ```
@@ -98,8 +100,8 @@ Facilitates asynchronous, event-driven communication across the platform. Handle
 ### 3. Polyglot Microservices
 Each service is built using the most appropriate language for its domain:
 - **Rust (`camera-service`)**: Handles CPU-intensive tasks like video stream decoding (FFmpeg/GStreamer), OpenCV processing, and bounding-box drawing with minimal latency.
-- **Go (`asset-service`, `mapping-service`)**: Used for high-concurrency network scanning, GIS telemetry aggregation, and high-throughput HTTP endpoints.
-- **Python (`ai-copilot-service`, `threat-intel-service`)**: Leverages the rich AI/ML and data-science ecosystems for language models, anomaly detection, and intelligence feed parsing.
+- **Go (`asset-service`)**: High-performance HTTP service handling live threat intelligence aggregation. Runs concurrent fan-out routines to check against local `web-check-api` and external intelligence providers (VirusTotal, AbuseIPDB, AlienVault OTX, Shodan, crt.sh). Gracefully degrades if providers are offline or api keys are missing. Performs sub-second category-specific caching using **Redis**.
+- **Python (`ai-copilot-service`)**: Leverages the rich AI/ML and data-science ecosystems for language models, anomaly detection, and intelligence feed parsing. Compiles protobuf specs at build time for optimal start-up times.
 - **Node.js (`user-service`, `gateway`)**: Manages identity, RBAC, session management, and orchestrates frontend requests.
 
 ---
@@ -115,7 +117,7 @@ Each service is built using the most appropriate language for its domain:
 ### Backend
 - **Gateway:** Fastify (Node.js)
 - **Service Interfaces:** Protocol Buffers (`.proto`) and gRPC
-- **Microservices:** Rust (Tonic), Go (google.golang.org/grpc), Python (grpcio)
+- **Microservices:** Rust (Tonic), Go (net/http + go-redis), Python (grpcio)
 
 ### Infrastructure & Data
 - **Message Broker:** NATS JetStream
@@ -129,10 +131,10 @@ Each service is built using the most appropriate language for its domain:
 
 ```text
 advanced-mern-osint-application/
-├── src/                    # Next.js Frontend App (UI, Components, Hooks)
+├── src/                    # Next.js Frontend App (UI, Components, Hooks, API routes)
 ├── gateway/                # Fastify API Gateway (REST -> gRPC bridge)
-├── user-service/           # Node.js Identity & RBAC Service
-├── asset-service/          # Go Service: Asset Discovery & Scanning
+├── user-service/           # Node.js Identity & RBAC Service (Mongoose aligned)
+├── asset-service/          # Go Service: Real-time Multi-source OSINT Aggregator
 ├── camera-service/         # Rust Service: Video Processing & Inference
 ├── ai-copilot-service/     # Python Service: LLM Abstraction & Chat
 ├── proto/                  # Shared Protobuf definitions (Single source of truth)
@@ -149,7 +151,7 @@ To run this platform locally for development, you will need:
 - **Node.js** `v20.x` or higher
 - **NPM** `v10.x` or higher
 - **Docker Engine & Docker Compose** (Critical for standing up NATS, Redis, MongoDB, and polyglot containers)
-- *(Optional)* **Rust Toolchain**, **Go 1.23+**, and **Python 3.11+** if you intend to run the microservices natively outside of Docker.
+- *(Optional)* **Rust Toolchain**, **Go 1.24+**, and **Python 3.11+** if you intend to run the microservices natively outside of Docker.
 
 ---
 
@@ -176,6 +178,12 @@ NATS_URL=nats://127.0.0.1:4222
 
 # Security
 JWT_SECRET=super_secret_jwt_key_kaal_bhairav_2026
+
+# External OSINT Provider API Keys (Optional)
+SHODAN_API_KEY=
+VT_API_KEY=
+ABUSEIPDB_API_KEY=
+OTX_API_KEY=
 ```
 
 ### 3. Spin Up Core Infrastructure
@@ -184,7 +192,7 @@ Use Docker Compose to build and start the entire stack (Microservices, Gateway, 
 docker compose build
 docker compose up -d
 ```
-*Note: The first build will take some time as it compiles the Go and Rust binaries inside their respective containers.*
+*Note: The first build will take some time as it compiles the Go, Rust, and Python stubs inside their respective containers.*
 
 ### 4. Start the Frontend Application
 Run the Next.js development server:
@@ -192,18 +200,18 @@ Run the Next.js development server:
 npm run dev
 ```
 
-The UI will be accessible at `http://localhost:3000` (or `http://localhost:3001` if port `3000` is utilized by the Grafana monitoring container). The frontend will communicate directly with the API Gateway running on port `4000`.
+The UI will be accessible at `http://localhost:3000` (or `http://localhost:3001` if port `3000` is utilized by the Grafana monitoring container). The frontend will communicate directly with the API Gateway running on port `4000` or the Go service on port `50051`.
 
 ---
 
 ## 📅 Roadmap & Evolution
 
 - [x] **Phase 1:** Core Infrastructure (gRPC, NATS, Microservice Stubs, API Gateway)
-- [ ] **Phase 2:** OSINT & Web-Check Native Integration (Transparent analysis engine)
+- [x] **Phase 2:** OSINT & Web-Check Native Integration (Go aggregation engine)
 - [ ] **Phase 3:** Real-Time Camera Intelligence (RTSP/WebRTC + Rust Object Detection)
-- [ ] **Phase 4:** Threat Intelligence Connectors & Background Schedulers
+- [x] **Phase 4:** Threat Intelligence Connectors & Background Schedulers (AbuseIPDB, OTX, VT)
 - [ ] **Phase 5:** AI Security Copilot (LLM Multi-Agent system)
-- [ ] **Phase 6:** Production Hardening & Observability (OpenTelemetry, CI/CD)
+- [ ] **Phase 6:** Production Hardening & Observability (OpenTelemetry, Signal-handling)
 
 ---
 
@@ -212,3 +220,4 @@ The UI will be accessible at `http://localhost:3000` (or `http://localhost:3001`
 This project is intended for educational, demonstrative, and defensive security purposes. Users are strictly responsible for adhering to applicable laws and regulations when using OSINT and scanning tools against external infrastructure.
 
 <p align="center">Developed with 💻 & ☕ for the Cyber Intelligence Community.</p>
+
