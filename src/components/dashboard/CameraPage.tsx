@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Video, Activity, Zap, Server, Settings, Focus, Minimize, Maximize, AlertTriangle, Crosshair, MapPin } from "lucide-react";
+import { Video, Activity, Zap, Server, Settings, Focus, Minimize, Maximize, AlertTriangle, Crosshair, MapPin, QrCode, Smartphone } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
 
 import { ICameraFeed, ISurveillanceEvent } from "@/types";
@@ -10,6 +10,8 @@ export default function CameraPage() {
   const [events, setEvents] = useState<ISurveillanceEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCam, setActiveCam] = useState<ICameraFeed | null>(null);
+  const [customHost, setCustomHost] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
 
   useEffect(() => {
     const sse = new EventSource("/api/surveillance/stream");
@@ -30,11 +32,20 @@ export default function CameraPage() {
 
     sse.onerror = (err) => {
       console.error("SSE Error:", err);
-      sse.close(); // Close on error to avoid infinite reconnect loops if auth fails
+      sse.close();
     };
 
     return () => sse.close();
   }, [activeCam]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const port = window.location.port ? `:${window.location.port}` : "";
+      const base = customHost ? `http://${customHost}${port}` : window.location.origin;
+      setLinkUrl(`${base}/dashboard/surveillance`);
+    }
+  }, [customHost]);
+
 
   return (
     <div className="space-y-5 h-[calc(100vh-6rem)] flex flex-col">
@@ -143,43 +154,89 @@ export default function CameraPage() {
           </div>
         </div>
 
-        {/* Sidebar - Threat Detection Logs */}
-        <div className="glass rounded-xl flex flex-col overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#1e3a5f]/40 bg-[#050b14]/50 flex items-center gap-2">
-            <Crosshair className="w-4 h-4 text-orange-400" />
-            <h3 className="text-sm font-semibold text-white">Detection Logs</h3>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-            {loading ? (
-               Array.from({ length: 5 }).map((_, i) => (
-                 <div key={i} className="h-16 bg-[#1e3a5f]/20 rounded-lg animate-pulse" />
-               ))
-            ) : events.length > 0 ? (
-              events.map((event, i) => (
-                <div key={i} className="p-3 rounded-lg bg-[#0d1b2e] border border-[#1e3a5f]/40 hover:border-orange-500/30 transition-colors">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-[9px] uppercase font-mono px-1.5 py-0.5 rounded border ${
-                      event.severity === 'critical' ? 'text-red-400 border-red-500/30 bg-red-500/10' :
-                      event.severity === 'high' ? 'text-orange-400 border-orange-500/30 bg-orange-500/10' :
-                      'text-yellow-400 border-yellow-500/30 bg-yellow-500/10'
-                    }`}>
-                      {event.type}
-                    </span>
-                    <span className="text-[9px] text-slate-500 font-mono">{timeAgo(event.timestamp)}</span>
+        {/* Sidebar - Threat Detection Logs & QR Code Connection */}
+        <div className="lg:col-span-1 flex flex-col gap-5 h-full min-h-0">
+          
+          {/* Top Panel: Detection Logs */}
+          <div className="glass rounded-xl flex flex-col overflow-hidden flex-1 min-h-0">
+            <div className="px-4 py-3 border-b border-[#1e3a5f]/40 bg-[#050b14]/50 flex items-center gap-2 flex-shrink-0">
+              <Crosshair className="w-4 h-4 text-orange-400" />
+              <h3 className="text-sm font-semibold text-white">Detection Logs</h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              {loading ? (
+                 Array.from({ length: 5 }).map((_, i) => (
+                   <div key={i} className="h-16 bg-[#1e3a5f]/20 rounded-lg animate-pulse" />
+                 ))
+              ) : events.length > 0 ? (
+                events.map((event, i) => (
+                  <div key={i} className="p-3 rounded-lg bg-[#0d1b2e] border border-[#1e3a5f]/40 hover:border-orange-500/30 transition-colors">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-[9px] uppercase font-mono px-1.5 py-0.5 rounded border ${
+                        event.severity === 'critical' ? 'text-red-400 border-red-500/30 bg-red-500/10' :
+                        event.severity === 'high' ? 'text-orange-400 border-orange-500/30 bg-orange-500/10' :
+                        'text-yellow-400 border-yellow-500/30 bg-yellow-500/10'
+                      }`}>
+                        {event.type}
+                      </span>
+                      <span className="text-[9px] text-slate-500 font-mono">{timeAgo(event.timestamp)}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-1.5">{event.description}</p>
+                    <p className="text-[10px] text-cyan-500 font-mono mt-1 pt-1 border-t border-[#1e3a5f]/30">
+                      Source: {typeof event.cameraId === "object" ? (event.cameraId as any)?.name : event.cameraId || "Unknown"}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-300 mt-1.5">{event.description}</p>
-                  <p className="text-[10px] text-cyan-500 font-mono mt-1 pt-1 border-t border-[#1e3a5f]/30">
-                    Source: {typeof event.cameraId === "object" ? (event.cameraId as any)?.name : event.cameraId || "Unknown"}
-                  </p>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                  <AlertTriangle className="w-8 h-8 opacity-20 mb-2" />
+                  <p className="text-xs text-center">No threats detected.</p>
                 </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                <AlertTriangle className="w-8 h-8 opacity-20 mb-2" />
-                <p className="text-xs text-center">No threats detected.</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+
+          {/* Bottom Panel: Mobile/Drone Pairing QR Code */}
+          <div className="glass rounded-xl p-4 flex flex-col gap-3 flex-shrink-0 bg-[#0a1628]/60 border border-[#1e3a5f]/30">
+            <div className="flex items-center gap-2 border-b border-[#1e3a5f]/20 pb-2">
+              <QrCode className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-sm font-semibold text-white">Stream Pairing</h3>
+            </div>
+            
+            <div className="flex flex-col items-center gap-2 bg-[#050b14]/80 p-3 rounded-lg border border-[#1e3a5f]/20">
+              {linkUrl ? (
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&color=0891b2&bgcolor=050b14&data=${encodeURIComponent(linkUrl)}`}
+                  alt="Surveillance Pairing QR Code"
+                  className="w-28 h-28 border border-cyan-500/30 p-1 rounded bg-[#050b14]"
+                />
+              ) : (
+                <div className="w-28 h-28 flex items-center justify-center border border-dashed border-slate-700 rounded text-slate-500 text-xs">
+                  Generating...
+                </div>
+              )}
+              <span className="text-[9px] font-mono text-cyan-400/80 text-center break-all select-all px-1">
+                {linkUrl || "establishing origin..."}
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase font-mono text-slate-400 tracking-wider flex items-center gap-1">
+                <Smartphone className="w-3 h-3 text-cyan-400" /> Custom Host/LAN IP
+              </label>
+              <input 
+                type="text" 
+                placeholder="e.g. 192.168.1.100"
+                value={customHost}
+                onChange={(e) => setCustomHost(e.target.value)}
+                className="w-full bg-[#050b14] border border-[#1e3a5f]/40 rounded px-2.5 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 font-mono"
+              />
+              <p className="text-[9px] text-slate-500 leading-normal pt-1">
+                Input your host LAN IP to override <code className="text-cyan-400">localhost</code>. Connect your mobile or drone receiver to scan and view stream overlays.
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
