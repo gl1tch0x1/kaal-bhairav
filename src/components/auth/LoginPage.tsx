@@ -1,11 +1,13 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Shield, AlertTriangle, User, Lock, Mail, ChevronRight, Zap } from "lucide-react";
 import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from") || "/dashboard";
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -42,7 +44,7 @@ export default function LoginPage() {
       }
 
       if (data.success) {
-        router.push("/dashboard");
+        router.push(from);
       }
     } catch {
       setError("Network error. Please try again.");
