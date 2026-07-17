@@ -218,8 +218,8 @@ To run this platform locally for development, you will need:
 ### 1. Clone & Install Dependencies
 Clone the repository and install the frontend/utility dependencies:
 ```bash
-git clone <repository-url>
-cd advanced-mern-osint-application
+git clone https://github.com/gl1tch0x1/kaal-bhairav.git
+cd kaal-bhairav
 npm install
 ```
 
