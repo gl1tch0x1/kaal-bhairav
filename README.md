@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="public/favicon.ico" alt="Kaal Bhairav Logo" width="100"/>
-  <h1 align="center">🌎 Kaal Bhairav OSINT & Security Operations Platform</h1>
+  <img src="public/dashboard-logo.png" alt="Kaal Bhairav Logo" width="100"/>
+  <h1 align="center">Kaal Bhairav OSINT & Security Operations Platform</h1>
   <p align="center">
     <strong>Production-Grade Open Source Intelligence, Cyber Threat Hunting, & Surveillance Platform</strong>
   </p>
