@@ -1,14 +1,9 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
 WORKDIR /app
 
-# Copy module files first to leverage Docker layer caching for deps
-COPY go.mod ./
-
-# Tidy and download dependencies (generates go.sum inside the build layer)
-RUN go mod tidy && go mod download
-
+# Copy all sources first, then resolve and download deps
 COPY . .
-RUN go build -o main .
+RUN go get github.com/redis/go-redis/v9@v9.7.0 && go mod tidy && go build -o main .
 
 FROM alpine:3.19
 WORKDIR /app
