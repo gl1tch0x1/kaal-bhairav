@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package camera;
+
+service CameraService {
+  rpc GetCameraStream (CameraRequest) returns (CameraStreamResponse) {}
+  rpc AnalyzeFootage (FootageRequest) returns (FootageAnalysisResponse) {}
+}
+
+message CameraRequest {
+  string camera_id = 1;
+}
+
+message CameraStreamResponse {
+  string stream_url = 1;
+  string status = 2;
+}
+
+message FootageRequest {
+  string camera_id = 1;
+  string timestamp = 2;
+}
+
+message FootageAnalysisResponse {
+  bool threat_detected = 1;
+  string description = 2;
+  float confidence = 3;
+}

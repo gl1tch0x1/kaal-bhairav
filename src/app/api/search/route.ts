@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     // LEGACY FALLBACK: If results are still empty or service is down
     if (results.length === 0) {
       let dbQuery: any = {
-        $text: { $search: query }
+        $text: { $search: `\"${query}\"` }
       };
       if (queryType && queryType !== "all") {
         dbQuery.queryType = queryType;

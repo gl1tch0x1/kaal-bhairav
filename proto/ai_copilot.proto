@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package ai_copilot;
+
+service AICopilotService {
+  rpc AnalyzeThreat (ThreatQuery) returns (ThreatAnalysisResponse) {}
+  rpc CorrelateData (CorrelationRequest) returns (CorrelationResponse) {}
+}
+
+message ThreatQuery {
+  string query = 1;
+  string query_type = 2;
+  string investigation_id = 3;
+}
+
+message ThreatAnalysisResponse {
+  string analysis = 1;
+  float confidence = 2;
+  repeated string mitre_tactics = 3;
+}
+
+message CorrelationRequest {
+  repeated string entity_ids = 1;
+  string time_window = 2;
+}
+
+message CorrelationResponse {
+  string correlation_graph_data = 1;
+  float risk_score = 2;
+}

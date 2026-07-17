@@ -22,23 +22,67 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
-  # Placeholder for Go Services
-  # go-services:
-  #   build: ./go-services
-  #   ports:
-  #     - "50051:50051"
+  nats:
+    image: nats:latest
+    container_name: kb-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: "-js" # Enable JetStream
+    restart: unless-stopped
 
-  # Placeholder for Python AI Services
-  # python-services:
-  #   build: ./python-services
-  #   ports:
-  #     - "8000:8000"
+  gateway:
+    build: ./gateway
+    container_name: kb-gateway
+    ports:
+      - "4000:4000"
+    depends_on:
+      - nats
+      - redis
+    volumes:
+      - ./proto:/app/proto
+    restart: unless-stopped
 
-  # Placeholder for Rust Services
-  # rust-services:
-  #   build: ./rust-services
+  user-service:
+    build: ./user-service
+    container_name: kb-user-service
+    depends_on:
+      - mongodb
+      - nats
+      - redis
+    volumes:
+      - ./proto:/app/proto
+    restart: unless-stopped
 
-  # Prometheus for Metrics
+  asset-service:
+    build: ./asset-service
+    container_name: kb-asset-service
+    depends_on:
+      - nats
+    volumes:
+      - ./proto:/app/proto
+    restart: unless-stopped
+
+  ai-copilot-service:
+    build: ./ai-copilot-service
+    container_name: kb-ai-copilot-service
+    depends_on:
+      - nats
+    volumes:
+      - ./proto:/app/proto
+    restart: unless-stopped
+
+  camera-service:
+    build:
+      context: .
+      dockerfile: camera-service/Dockerfile
+    container_name: kb-camera-service
+    depends_on:
+      - nats
+    volumes:
+      - ./proto:/app/proto
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:latest
     container_name: kb-prometheus
@@ -48,7 +92,6 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
     restart: unless-stopped
 
-  # Grafana for Dashboards
   grafana:
     image: grafana/grafana:latest
     container_name: kb-grafana

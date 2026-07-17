@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   LayoutDashboard, Search, FolderOpen, Bell, Activity,
   Settings, LogOut, Shield, ChevronLeft, ChevronRight,
@@ -63,8 +64,8 @@ export default function Sidebar() {
         collapsed && "justify-center px-2"
       )}>
         <div className="relative flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center shadow-lg glow-red">
-            <Eye className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 flex items-center justify-center drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] transform hover:scale-110 transition-transform">
+            <Image src="/dashboard-logo.png" alt="Logo" width={40} height={40} className="object-contain" />
           </div>
           <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#070e1a] pulse-dot" />
         </div>

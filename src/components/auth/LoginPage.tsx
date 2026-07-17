@@ -60,111 +60,95 @@ export default function LoginPage() {
         <div className="absolute top-[40%] left-[40%] w-[300px] h-[300px] rounded-full bg-purple-900/10 blur-[80px]" />
       </div>
 
-      {/* LEFT PANEL - Kaal Bhairav */}
+      {/* LEFT PANEL - Kaal Bhairav (Aggressive Focal Design) */}
       <div className="hidden lg:flex lg:w-[55%] relative flex-col items-center justify-center overflow-hidden">
-        {/* Dark atmospheric background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0005] via-[#150010] to-[#050015]" />
 
-        {/* Cyber grid overlay */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: "linear-gradient(rgba(220,38,38,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(220,38,38,0.08) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
+        {/* Injected Thunder Animation Styles */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+          @keyframes thunder {
+            0% { opacity: 0; background-color: transparent; }
+            1% { opacity: 0.8; background-color: rgba(255, 255, 255, 0.4); }
+            2% { opacity: 0; }
+            3% { opacity: 0.6; background-color: rgba(220, 38, 38, 0.6); }
+            4% { opacity: 0; }
+            20% { opacity: 0; }
+            21% { opacity: 0.9; background-color: rgba(255, 255, 255, 0.5); }
+            23% { opacity: 0; }
+            55% { opacity: 0; }
+            56% { opacity: 0.7; background-color: rgba(255, 255, 255, 0.3); }
+            57% { opacity: 0; }
+            100% { opacity: 0; }
+          }
+          .thunder-bg {
+            animation: thunder 8s infinite;
+            mix-blend-mode: overlay;
+          }
+          .thunder-flash {
+            animation: thunder 12s infinite reverse;
+            mix-blend-mode: color-dodge;
+          }
+        `}} />
 
-        {/* Radial glow behind deity */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[600px] h-[600px] rounded-full bg-red-900/20 blur-[80px]" />
+        {/* Pitch Black Void Background */}
+        <div className="absolute inset-0 bg-black z-0" />
+
+        {/* Thunder flashes layers */}
+        <div className="absolute inset-0 z-0 thunder-bg" />
+        <div className="absolute inset-0 z-0 thunder-flash opacity-50 bg-[url('https://www.transparenttextures.com/patterns/crissxcross.png')]" />
+
+        {/* Deep aggressive red radial gradient in the center */}
+        <div className="absolute inset-0 flex items-center justify-center z-0">
+          <div className="w-[800px] h-[800px] rounded-full bg-red-900/30 blur-[100px] animate-[pulse_3s_ease-in-out_infinite]" />
         </div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[400px] h-[400px] rounded-full bg-orange-900/15 blur-[60px]" />
-        </div>
 
-        {/* Sacred circle decorative */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[520px] h-[520px] rounded-full border border-red-900/30 animate-[spin_40s_linear_infinite]" />
-          <div className="absolute w-[440px] h-[440px] rounded-full border border-orange-900/20 animate-[spin_30s_linear_infinite_reverse]" />
-          <div className="absolute w-[560px] h-[560px] rounded-full border border-red-800/15" />
-          {/* Mandala dots */}
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-3 h-3 rounded-full bg-red-600/50 border border-red-400/60"
+        {/* Kaal Bhairav Imposing Image */}
+        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full pt-10">
+          <div className="relative w-[700px] h-[700px] flex items-center justify-center transform transition-transform duration-1000 hover:scale-105">
+            <Image
+              src="/logo.png"
+              alt="Kaal Bhairav"
+              fill
+              className="object-contain object-center z-10"
               style={{
-                transform: `rotate(${i * 45}deg) translateY(-260px)`,
-                transformOrigin: "center 260px",
+                mixBlendMode: "lighten",
+                filter: "drop-shadow(0 0 50px rgba(255,0,0,0.8)) contrast(1.4) brightness(1.1)",
+                maskImage: "radial-gradient(circle at center, black 50%, transparent 100%)",
+                WebkitMaskImage: "radial-gradient(circle at center, black 50%, transparent 100%)"
               }}
+              priority
             />
-          ))}
-        </div>
-
-        {/* Kaal Bhairav image */}
-        <div className="relative z-10 flex flex-col items-center">
-          <div className="relative">
-            {/* Outer glow ring */}
-            <div className="absolute inset-[-30px] rounded-full bg-gradient-to-b from-red-900/30 via-transparent to-transparent blur-[30px]" />
-
-            <div className="relative w-[380px] h-[480px]">
-              <Image
-                src="/kaal-bhairav.png"
-                alt="Kaal Bhairav"
-                fill
-                className="object-contain object-center drop-shadow-[0_0_60px_rgba(220,38,38,0.5)]"
-                style={{ filter: "drop-shadow(0 0 40px rgba(220,38,38,0.6)) drop-shadow(0 0 80px rgba(120,0,0,0.4))" }}
-                priority
-              />
-            </div>
           </div>
 
-          {/* Title below deity */}
-          <div className="text-center mt-4 z-10">
-            <h1
-              className="text-4xl font-bold tracking-[0.15em] text-gradient-red uppercase"
+          {/* Aggressive Title Overlay positioned slightly over the bottom of the image */}
+          <div className="absolute bottom-16 text-center z-20">
+            {/* <h1
+              className="text-6xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-b from-white via-red-500 to-red-900 drop-shadow-[0_5px_5px_rgba(0,0,0,1)] uppercase"
               style={{ fontFamily: "'Cinzel', serif" }}
             >
               KAAL BHAIRAV
-            </h1>
-            <p className="text-red-400/70 text-sm tracking-[0.4em] mt-1 uppercase">
-              Open Source Intelligence
-            </p>
-            <div className="flex items-center justify-center gap-2 mt-3">
-              <div className="w-16 h-px bg-gradient-to-r from-transparent to-red-600/60" />
-              <div className="w-2 h-2 rounded-full bg-red-500 pulse-dot" />
-              <div className="w-16 h-px bg-gradient-to-l from-transparent to-red-600/60" />
+            </h1> */}
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <div className="w-24 h-1 bg-gradient-to-r from-transparent to-red-600" />
+              {/* <p className="text-red-500 text-sm tracking-[0.5em] font-bold uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
+                ABSOLUTE DOMINANCE
+              </p> */}
+              <div className="w-24 h-1 bg-gradient-to-l from-transparent to-red-600" />
             </div>
-          </div>
-
-          {/* Feature badges */}
-          <div className="flex flex-wrap gap-3 mt-8 justify-center max-w-sm z-10">
-            {[
-              { icon: "🕵️", label: "Deep Web Recon" },
-              { icon: "🌐", label: "Network Intel" },
-              { icon: "📡", label: "Signal Tracking" },
-              { icon: "🔐", label: "Crypto Analysis" },
-              { icon: "📊", label: "Data Correlation" },
-              { icon: "⚡", label: "Real-time Alerts" },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-red-900/40 bg-red-950/20 text-red-300/80"
-              >
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
-              </div>
-            ))}
           </div>
         </div>
 
-        {/* Bottom scanline effect */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#050b14] to-transparent" />
+        {/* Scanline overlay for aggressive cyber feel */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none z-20" style={{
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "100% 4px"
+        }} />
 
-        {/* Corner decorations */}
-        <div className="absolute top-6 left-6 w-12 h-12 border-t-2 border-l-2 border-red-600/40 rounded-tl-lg" />
-        <div className="absolute top-6 right-6 w-12 h-12 border-t-2 border-r-2 border-red-600/40 rounded-tr-lg" />
-        <div className="absolute bottom-6 left-6 w-12 h-12 border-b-2 border-l-2 border-red-600/40 rounded-bl-lg" />
-        <div className="absolute bottom-6 right-6 w-12 h-12 border-b-2 border-r-2 border-red-600/40 rounded-br-lg" />
+        {/* Corner aggressive brackets */}
+        <div className="absolute top-8 left-8 w-16 h-16 border-t-4 border-l-4 border-red-600 z-20" />
+        <div className="absolute top-8 right-8 w-16 h-16 border-t-4 border-r-4 border-red-600 z-20" />
+        <div className="absolute bottom-8 left-8 w-16 h-16 border-b-4 border-l-4 border-red-600 z-20" />
+        <div className="absolute bottom-8 right-8 w-16 h-16 border-b-4 border-r-4 border-red-600 z-20" />
       </div>
 
       {/* RIGHT PANEL - Auth Form */}
@@ -176,7 +160,7 @@ export default function LoginPage() {
               className="text-3xl font-bold tracking-widest text-gradient-red uppercase"
               style={{ fontFamily: "'Cinzel', serif" }}
             >
-              KAAL BHAIRAV
+              KAAL BHAIRAVA
             </h1>
             <p className="text-slate-500 text-xs tracking-widest mt-1">OSINT PLATFORM</p>
           </div>
@@ -307,7 +291,7 @@ export default function LoginPage() {
             <span>·</span>
             <span>KAAL BHAIRAV OSINT</span>
             <span>·</span>
-            <span>© 2024</span>
+            <span>© 2026</span>
           </div>
         </div>
       </div>

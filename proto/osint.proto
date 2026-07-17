@@ -1,0 +1,16 @@
+syntax = "proto3";
+package osint;
+
+service OsintService {
+  rpc ScanTarget (ScanRequest) returns (ScanResponse);
+}
+
+message ScanRequest {
+  string target = 1;
+  repeated string modules = 2; // e.g. 'dns', 'ssl', 'whois'
+}
+
+message ScanResponse {
+  string job_id = 1;
+  string status = 2;
+}

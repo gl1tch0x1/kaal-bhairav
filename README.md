@@ -1,7 +1,16 @@
 <div align="center">
-  <h1 align="center">🌎 Kaal Bhairav OSINT Platform</h1>
+  <img src="public/favicon.ico" alt="Kaal Bhairav Logo" width="100"/>
+  <h1 align="center">🌎 Kaal Bhairav OSINT & Security Operations Platform</h1>
   <p align="center">
-    <strong>Advanced MERN-based Open Source Intelligence & Surveillance Dashboard</strong>
+    <strong>Production-Grade Open Source Intelligence, Cyber Threat Hunting, & Surveillance Platform</strong>
+  </p>
+  <p>
+    <a href="#overview">Overview</a> •
+    <a href="#key-features">Key Features</a> •
+    <a href="#system-architecture">Architecture</a> •
+    <a href="#technology-stack">Tech Stack</a> •
+    <a href="#module-breakdown">Modules</a> •
+    <a href="#installation--setup">Setup</a>
   </p>
 </div>
 
@@ -9,190 +18,197 @@
 
 ## 📖 Overview
 
-Kaal Bhairav is an industry-grade, highly optimized, and modern web application designed for Open Source Intelligence (OSINT) gathering, network link analysis, and live surveillance monitoring. 
+**Kaal Bhairav** is an industry-grade, highly scalable, and modular web application designed for Cyber Threat Intelligence (CTI), Open Source Intelligence (OSINT) gathering, network link analysis, and live surveillance monitoring. 
 
-It provides cyber-intelligence analysts with a unified interface to monitor targets, analyze threat intelligence feeds, map out malicious network infrastructures, and view simulated live CCTV surveillance streams—all powered by a fast, dynamic Next.js frontend and a resilient MongoDB backend.
+It provides SOC analysts, threat hunters, and cyber-intelligence professionals with a unified interface to monitor targets, analyze threat intelligence feeds, map out malicious network infrastructures, and view real-time CCTV streams. Moving beyond a standard monolithic architecture, Kaal Bhairav employs a **Polyglot Event-Driven Microservices** architecture for extreme performance, flexibility, and scalability—making it comparable to enterprise solutions like CrowdStrike Falcon or Elastic Security.
 
 ---
 
 ## ✨ Key Features
 
-- **🛡️ Live Threat Feed:** Real-time stream of parsed Indicators of Compromise (IOCs) such as malicious IPs, domains, and phishing campaigns (Supported by MITRE & CVE Feed Integrations).
-- **🕸️ Network Topology Mapping:** Advanced Geographic Information System (GIS) mapping powered by Leaflet and MapLibre for precise threat localization.
-- **🎥 Live Surveillance Module:** Simulated CCTV management console with live polling of detection logs, camera connection telemetry, and active threat events.
-- **🎯 Target Management:** Track and monitor specific individuals or infrastructure targets with calculated risk scores and status updates.
-- **🔍 OSINT Search Engine:** Comprehensive search interface simulating queries across multiple external intelligence databases.
-- **🚀 Ultra-Optimized Architecture:** Built with React `useMemo`, `Zustand` global state, `@tanstack/react-query`, and `framer-motion` animations.
-- **⚙️ Polyglot Microservices:** Highly-scalable distributed architecture incorporating high-performance Rust, Go, and Python stubs behind an API Gateway.
-- **🔒 Security & Observability:** Secure session management (JWT), combined with Prometheus & Grafana for distributed telemetry and structured JSON logging.
+- **🕸️ OSINT & Web-Check Integration:** Transparently integrated intelligence aggregation combining Shodan, Censys, Whois, VirusTotal, and more into unified threat reports.
+- **🎥 Live Camera Intelligence Module:** Real-time CCTV streaming with multi-camera WebRTC/RTSP support, object/motion detection powered by a highly concurrent Rust processing engine.
+- **🗺️ Advanced Threat Mapping (GIS):** Professional threat intelligence maps utilizing MapLibre and Leaflet to visualize active incidents, malware campaigns, and asset telemetry.
+- **🤖 AI Security Copilot:** A multi-LLM (OpenAI, Claude, Llama) abstraction layer capable of interpreting threat data, summarizing investigations, and guiding incident response workflows via natural language.
+- **🔌 Pluggable Architecture:** A robust plugin manager designed to dynamically load external scanners, recon modules, and custom visualization tools without modifying the core system.
+- **🛡️ Live Threat Feed Connectors:** Ingest normalized indicators of compromise (IOCs) from MITRE ATT&CK, CVE/NVD, AbuseIPDB, MISP, and AlienVault OTX.
+- **🔒 Zero-Trust Security Model:** Implements stringent Role-Based Access Control (RBAC), stateless JWT authentication, and secure inter-service gRPC communication.
 
 ---
 
 ## 🏗️ System Architecture
 
-The application transitioned from a MERN monolith to a distributed Polyglot Microservice architecture.
+Kaal Bhairav has been modernized into a distributed, event-driven polyglot microservice ecosystem to handle the immense throughput of intelligence gathering and stream processing.
+
+### High-Level Topology
 
 ```mermaid
 graph TD
-    subgraph Client [Frontend UI Client - Browser]
+    subgraph Client [Frontend Layer]
         UI[Next.js React Frontend]
-        AuthC[Auth Context]
-        Components[Lazy Loaded Components]
-        UI --> AuthC
-        UI --> Components
     end
 
-    subgraph API [Next.js API Gateway]
-        Router["/api/* Endpoints"]
-        Auth[Auth Controller]
-        Search[Gateway Service]
+    subgraph GatewayLayer [API Gateway & Identity]
+        Gateway["Gateway Service (Node.js/Fastify)"]
+        UserSvc["User Service (Node.js/gRPC)"]
     end
     
     subgraph Microservices [Core Defensive Services]
-        Go[Go: Background Scheduler]
-        Rust[Rust: High-Perf Endpoints]
-        Python[Python: AI Copilot FastAPI]
+        AssetSvc["asset-service (Go)"]
+        CameraSvc["camera-service (Rust)"]
+        AICopilot["ai-copilot-service (Python)"]
+        OSINTSvc["osint-service (Python/Node)"]
     end
 
-    subgraph Database [MongoDB & Observability]
-        DB[(MongoDB Local)]
+    subgraph MessageBroker [Event Bus]
+        NATS["NATS JetStream"]
+    end
+
+    subgraph Database [Storage & Observability]
+        DB[(MongoDB)]
         Redis[(Redis Cache)]
         Prom[Prometheus]
         Graf[Grafana]
     end
 
     %% Flow
-    Client -- HTTP GET/POST --> Router
-    Router --> Auth
-    Router --> Search
+    Client -- "REST / WebSocket" --> Gateway
+    Gateway -- "gRPC" --> UserSvc
+    Gateway -- "gRPC" --> AssetSvc
+    Gateway -- "gRPC" --> AICopilot
+    Gateway -- "gRPC" --> CameraSvc
+    Gateway -- "gRPC" --> OSINTSvc
     
-    Search -- RPC / Fetch --> Go
-    Search -- RPC / Fetch --> Rust
-    Search -- RPC / Fetch --> Python
+    UserSvc -- "Pub/Sub" --> NATS
+    AssetSvc -- "Pub/Sub" --> NATS
+    AICopilot -- "Pub/Sub" --> NATS
+    CameraSvc -- "Pub/Sub" --> NATS
 
-    Auth -- Mongoose --> DB
-    Search -- Mongoose --> DB
-    Search -- Redis --> Redis
+    UserSvc -- "Mongoose" --> DB
+    AssetSvc -- "Mongoose" --> DB
+    Gateway -- "Cache" --> Redis
 ```
 
-### 🗄️ Database Schema Topology
+### 1. API Gateway (Node.js / Fastify)
+Acts as the ingress point. It translates standard REST and WebSocket requests from the frontend into highly optimized synchronous **gRPC** calls to the backend microservices. Handles robust rate limiting (to prevent brute force/DDoS attacks), global authentication decoding, Redis caching for heavy workloads (like AI analysis), and WebSocket hub routing.
 
-```mermaid
-erDiagram
-    USER ||--o{ INVESTIGATION : manages
-    INVESTIGATION ||--o{ TARGET : targets
-    INVESTIGATION }|--|{ FEED_ITEM : references
-    
-    NETWORK_NODE ||--o{ NETWORK_LINK : source
-    NETWORK_NODE ||--o{ NETWORK_LINK : target
-    
-    CAMERA ||--o{ SURVEILLANCE_EVENT : records
-    
-    USER {
-        ObjectId _id
-        string username
-        string passwordHash
-        string role
-    }
-```
+### 2. Message Broker (NATS JetStream)
+Facilitates asynchronous, event-driven communication across the platform. Handles massive broadcast events like `scan.completed`, `ioc.matched`, or `camera.motion_detected` enabling the microservices to remain deeply decoupled and independently scalable.
+
+### 3. Polyglot Microservices
+Each service is built using the most appropriate language for its domain:
+- **Rust (`camera-service`)**: Handles CPU-intensive tasks like video stream decoding (FFmpeg/GStreamer), OpenCV processing, and bounding-box drawing with minimal latency.
+- **Go (`asset-service`, `mapping-service`)**: Used for high-concurrency network scanning, GIS telemetry aggregation, and high-throughput HTTP endpoints.
+- **Python (`ai-copilot-service`, `threat-intel-service`)**: Leverages the rich AI/ML and data-science ecosystems for language models, anomaly detection, and intelligence feed parsing.
+- **Node.js (`user-service`, `gateway`)**: Manages identity, RBAC, session management, and orchestrates frontend requests.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Frontend Framework:** [Next.js](https://nextjs.org/) (React, App Router)
+### Frontend
+- **Framework:** Next.js 15 (App Router) + React 19
 - **State Management:** Zustand, @tanstack/react-query
-- **Styling:** Tailwind CSS, Framer Motion, Lucide Icons
-- **Data Visualization:** Recharts (Analytical Charts), React-Leaflet (GIS Mapping)
-- **Microservices:** Rust (warp), Go, Python (FastAPI)
-- **Backend API Gateway:** Node.js (Next.js serverless functions)
-- **Database & Cache:** MongoDB & Mongoose ORM, Redis
-- **Observability:** Prometheus, Grafana, Structured JSON Logger
-- **Authentication:** Custom session-based JWT authentication
+- **Styling & Animation:** Tailwind CSS v4, Framer Motion
+- **Visuals:** Recharts, React-Leaflet, AG Grid
+
+### Backend
+- **Gateway:** Fastify (Node.js)
+- **Service Interfaces:** Protocol Buffers (`.proto`) and gRPC
+- **Microservices:** Rust (Tonic), Go (google.golang.org/grpc), Python (grpcio)
+
+### Infrastructure & Data
+- **Message Broker:** NATS JetStream
+- **Databases:** MongoDB (Primary Data), Redis (Caching & Sessions)
+- **Containerization:** Docker & Docker Compose
+- **Observability:** Prometheus, Grafana, OpenTelemetry (Planned)
+
+---
+
+## 📂 Repository Structure
+
+```text
+advanced-mern-osint-application/
+├── src/                    # Next.js Frontend App (UI, Components, Hooks)
+├── gateway/                # Fastify API Gateway (REST -> gRPC bridge)
+├── user-service/           # Node.js Identity & RBAC Service
+├── asset-service/          # Go Service: Asset Discovery & Scanning
+├── camera-service/         # Rust Service: Video Processing & Inference
+├── ai-copilot-service/     # Python Service: LLM Abstraction & Chat
+├── proto/                  # Shared Protobuf definitions (Single source of truth)
+├── scripts/                # Utility and Database Seeding Scripts
+├── docker-compose.yml      # Core infrastructure orchestration
+└── README.md               # System Documentation
+```
 
 ---
 
 ## ⚙️ Prerequisites
 
-Before you begin, ensure you have the following installed on your machine:
-- **Node.js:** `v18.x` or higher
-- **NPM:** `v9.x` or higher
-- **Docker & Docker Compose:** Required to run MongoDB, Redis, Prometheus, and Grafana simultaneously.
+To run this platform locally for development, you will need:
+- **Node.js** `v20.x` or higher
+- **NPM** `v10.x` or higher
+- **Docker Engine & Docker Compose** (Critical for standing up NATS, Redis, MongoDB, and polyglot containers)
+- *(Optional)* **Rust Toolchain**, **Go 1.23+**, and **Python 3.11+** if you intend to run the microservices natively outside of Docker.
 
 ---
 
 ## 🚀 Installation & Setup
 
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd advanced-mern-osint-application
-   ```
+### 1. Clone & Install Dependencies
+Clone the repository and install the frontend/utility dependencies:
+```bash
+git clone <repository-url>
+cd advanced-mern-osint-application
+npm install
+```
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+### 2. Environment Configuration
+Create a `.env` file in the root of the project:
+```env
+# Database Connections
+MONGODB_URI=mongodb://127.0.0.1:27017/osint
+REDIS_URL=redis://127.0.0.1:6379
 
-3. **Configure Environment Variables:**
-   Create a `.env` file in the root directory and add the following:
-   ```env
-   # Database Connection
-   MONGODB_URI=mongodb://127.0.0.1:27017/osint
+# Gateway & NATS
+GATEWAY_PORT=4000
+NATS_URL=nats://127.0.0.1:4222
 
-   # JWT Secret for Session Management
-   JWT_SECRET=super_secret_jwt_key_kaal_bhairav_2026
-   ```
+# Security
+JWT_SECRET=super_secret_jwt_key_kaal_bhairav_2026
+```
 
-4. **Boot up Core Infrastructure:**
-   Run Docker Compose to spin up MongoDB, Redis, Prometheus, and Grafana:
-   ```bash
-   docker-compose up -d
-   ```
+### 3. Spin Up Core Infrastructure
+Use Docker Compose to build and start the entire stack (Microservices, Gateway, NATS, Redis, MongoDB).
+```bash
+docker compose build
+docker compose up -d
+```
+*Note: The first build will take some time as it compiles the Go and Rust binaries inside their respective containers.*
 
-5. **Seed the Database:**
-   Populate the database with the initial mock intelligence data, network nodes, and the default admin user.
-   ```bash
-   npm run seed
-   ```
+### 4. Start the Frontend Application
+Run the Next.js development server:
+```bash
+npm run dev
+```
 
-6. **Start the Development Server:**
-   ```bash
-   npm run dev
-   ```
-
-7. **Access the Application:**
-   Open your browser and navigate to `http://localhost:3000`.
+The UI will be accessible at `http://localhost:3000` (or `http://localhost:3001` if port `3000` is utilized by the Grafana monitoring container). The frontend will communicate directly with the API Gateway running on port `4000`.
 
 ---
 
-## 🔐 Default Credentials
+## 📅 Roadmap & Evolution
 
-After running the seeder, the system is provisioned with a default administrator account. Registration has been intentionally disabled for security purposes.
-
-- **Username:** `admin`
-- **Password:** `admin`
-
-*Note: You can update your password from the settings dashboard after logging in.*
-
----
-
-## 📱 Module Overview
-
-| Module | Description |
-| :--- | :--- |
-| **Dashboard** | High-level intelligence overview, metric cards, and timeline charts. |
-| **OSINT Search** | Comprehensive lookup tool simulating scans against 50+ global databases. |
-| **Investigations** | Track ongoing and past investigations. |
-| **Target Analysis** | Detailed profiling of tracked individuals and digital infrastructure. |
-| **Network Map** | Force-directed interactive graphing for tracking relational dependencies. |
-| **Live Surveillance** | Simulated CCTV console showing active event streams and telemetry. |
-| **Intelligence Feed** | Aggregated global threat indicators and alerts. |
+- [x] **Phase 1:** Core Infrastructure (gRPC, NATS, Microservice Stubs, API Gateway)
+- [ ] **Phase 2:** OSINT & Web-Check Native Integration (Transparent analysis engine)
+- [ ] **Phase 3:** Real-Time Camera Intelligence (RTSP/WebRTC + Rust Object Detection)
+- [ ] **Phase 4:** Threat Intelligence Connectors & Background Schedulers
+- [ ] **Phase 5:** AI Security Copilot (LLM Multi-Agent system)
+- [ ] **Phase 6:** Production Hardening & Observability (OpenTelemetry, CI/CD)
 
 ---
 
 ## 📝 License
 
-This project is intended for educational and demonstrative purposes in building advanced intelligence dashboards.
+This project is intended for educational, demonstrative, and defensive security purposes. Users are strictly responsible for adhering to applicable laws and regulations when using OSINT and scanning tools against external infrastructure.
 
 <p align="center">Developed with 💻 & ☕ for the Cyber Intelligence Community.</p>
