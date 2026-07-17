@@ -39,12 +39,24 @@ export default function CameraPage() {
   }, [activeCam]);
 
   useEffect(() => {
+    fetch("/api/host-ip")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ip && data.ip !== "localhost") {
+          setCustomHost(data.ip);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch host IP", err));
+  }, []);
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const port = window.location.port ? `:${window.location.port}` : "";
       const base = customHost ? `http://${customHost}${port}` : window.location.origin;
       setLinkUrl(`${base}/dashboard/surveillance`);
     }
   }, [customHost]);
+
 
 
   return (
