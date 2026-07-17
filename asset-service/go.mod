@@ -1,3 +1,3 @@
-module github.com/kaalbhairav/go-services
+module asset-service
 
 go 1.21

@@ -31,6 +31,13 @@ services:
     command: "-js" # Enable JetStream
     restart: unless-stopped
 
+  # web-check-api: internal only — no host ports exposed
+  webcheck-api:
+    image: lissy93/web-check-api
+    container_name: kb-webcheck
+    restart: unless-stopped
+    # No `ports:` — reachable only inside the Docker network as http://kb-webcheck:3000
+
   gateway:
     build: ./gateway
     container_name: kb-gateway
@@ -39,6 +46,8 @@ services:
     depends_on:
       - nats
       - redis
+    environment:
+      - REDIS_HOST=kb-redis
     volumes:
       - ./proto:/app/proto
     restart: unless-stopped
@@ -59,6 +68,16 @@ services:
     container_name: kb-asset-service
     depends_on:
       - nats
+      - redis
+      - webcheck-api
+    environment:
+      - WEBCHECK_API_URL=http://kb-webcheck:3000
+      - REDIS_URL=redis://kb-redis:6379
+      - SHODAN_API_KEY=${SHODAN_API_KEY:-}
+      - VT_API_KEY=${VT_API_KEY:-}
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY:-}
+      - OTX_API_KEY=${OTX_API_KEY:-}
+      - NVD_API_KEY=${NVD_API_KEY:-}
     volumes:
       - ./proto:/app/proto
     restart: unless-stopped
