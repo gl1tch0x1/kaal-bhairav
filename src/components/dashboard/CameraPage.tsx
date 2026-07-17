@@ -44,8 +44,8 @@ export default function CameraPage() {
     fetch("/api/auth/token")
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.token) {
-          setBypassToken(data.token);
+        if (data.success && data.pairingId) {
+          setBypassToken(data.pairingId);
         }
       })
       .catch((err) => console.error("Failed to fetch bypass token:", err));
@@ -81,7 +81,7 @@ export default function CameraPage() {
       }
 
       if (bypassToken) {
-        setLinkUrl(`${base}/api/auth/bypass?token=${encodeURIComponent(bypassToken)}`);
+        setLinkUrl(`${base}/api/auth/bypass?id=${encodeURIComponent(bypassToken)}`);
       } else {
         setLinkUrl(`${base}/dashboard/surveillance`);
       }

@@ -156,6 +156,12 @@ const SurveillanceEventSchema = new Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
+const PairingTokenSchema = new Schema({
+  pairingId: { type: String, required: true, unique: true },
+  payload: { type: Object, required: true },
+  expiresAt: { type: Date, required: true, index: { expires: 0 } },
+});
+
 export const User = mongoose.models.User || mongoose.model("User", UserSchema);
 export const Investigation = mongoose.models.Investigation || mongoose.model("Investigation", InvestigationSchema);
 export const SearchHistory = mongoose.models.SearchHistory || mongoose.model("SearchHistory", SearchHistorySchema);
@@ -170,3 +176,4 @@ export const NetworkLink = mongoose.models.NetworkLink || mongoose.model("Networ
 export const OSINTResult = mongoose.models.OSINTResult || mongoose.model("OSINTResult", OSINTResultSchema);
 export const CameraFeed = mongoose.models.CameraFeed || mongoose.model("CameraFeed", CameraFeedSchema);
 export const SurveillanceEvent = mongoose.models.SurveillanceEvent || mongoose.model("SurveillanceEvent", SurveillanceEventSchema);
+export const PairingToken = mongoose.models.PairingToken || mongoose.model("PairingToken", PairingTokenSchema);

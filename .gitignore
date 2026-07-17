@@ -35,3 +35,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local tunnel logs
+tunnel.log
+tunnel.txt
+
+# ignore nested node_modules
+**/node_modules

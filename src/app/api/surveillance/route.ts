@@ -1,9 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/db";
 import { CameraFeed, SurveillanceEvent } from "@/db/schema";
+import { getSession } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const auth = await getSession();
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await connectDB();
     
     // Auto-initialize default cameras on-demand if database is empty

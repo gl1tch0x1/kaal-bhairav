@@ -1,28 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken, signToken } from "@/lib/auth";
+import { signToken } from "@/lib/auth";
+import { connectDB } from "@/db";
+import { PairingToken } from "@/db/schema";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const token = searchParams.get("token");
+  const id = searchParams.get("id");
 
-  if (!token) {
-    return new Response("Missing bypass token", { status: 400 });
+  if (!id) {
+    return new Response("Missing bypass identifier", { status: 400 });
   }
 
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return new Response("Token expired or invalid", { status: 401 });
+  await connectDB();
+
+  // Find and immediately delete the token to prevent replay attacks (Single-Use OTP)
+  const pairingDoc = await PairingToken.findOneAndDelete({ pairingId: id });
+
+  if (!pairingDoc) {
+    return new Response("Bypass pairing link is invalid or expired", { status: 401 });
   }
 
-  // Token is valid! Sign a new 24h session token for the phone browser session
-  const sessionToken = await signToken(payload);
+  // Ensure it has not expired yet (MongoDB TTL index runs periodically, so double check manually)
+  if (pairingDoc.expiresAt.getTime() < Date.now()) {
+    return new Response("Bypass pairing link has expired", { status: 401 });
+  }
+
+  const payload = pairingDoc.payload;
+
+  // Sign a new 24h session token for the phone browser session
+  const sessionToken = await signToken({
+    userId: payload.userId,
+    username: payload.username,
+    email: payload.email,
+    role: payload.role || "analyst",
+  });
 
   const response = NextResponse.redirect(new URL("/dashboard/surveillance", req.url));
 
+  const isProduction = process.env.NODE_ENV === "production";
+  const isHttps = req.nextUrl.protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
+
   response.cookies.set("osint_token", sessionToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction || isHttps,
+    sameSite: "strict", // Hardened SameSite rule
     maxAge: 60 * 60 * 24, // 24 hours persistent cookie
     path: "/",
   });

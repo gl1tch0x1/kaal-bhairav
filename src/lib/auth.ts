@@ -1,28 +1,34 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "kaal-bhairav-osint-secret-key-2024-ultra-secure"
-);
+function getSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("CRITICAL SECURITY ERROR: JWT_SECRET environment variable is not defined!");
+  }
+  return new TextEncoder().encode(secret);
+}
 
 export interface JWTPayload {
-  userId: number;
+  userId: string;
   username: string;
   email: string;
   role: string;
 }
 
 export async function signToken(payload: JWTPayload): Promise<string> {
+  const secret = getSecret();
   return await new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("24h")
-    .sign(SECRET);
+    .sign(secret);
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const secret = getSecret();
+    const { payload } = await jwtVerify(token, secret);
     return payload as unknown as JWTPayload;
   } catch {
     return null;
@@ -40,12 +46,3 @@ export async function setSession(payload: JWTPayload): Promise<string> {
   const token = await signToken(payload);
   return token;
 }
-
-export async function signShortToken(payload: JWTPayload): Promise<string> {
-  return await new SignJWT({ ...payload })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("5m")
-    .sign(SECRET);
-}
-

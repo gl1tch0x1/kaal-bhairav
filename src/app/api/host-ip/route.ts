@@ -1,9 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import os from "os";
 import fs from "fs";
 import path from "path";
+import { getSession } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await getSession();
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   // First, check if a public localtunnel is running and parse its URL
   try {
     const logPath = path.join(process.cwd(), "tunnel.txt");

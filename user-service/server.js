@@ -31,7 +31,11 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 });
 const userProto = grpc.loadPackageDefinition(packageDefinition).user;
 
-const JWT_SECRET = process.env.JWT_SECRET || 'kaal-bhairav-osint-secret-key-2024-ultra-secure';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error("CRITICAL SECURITY ERROR: JWT_SECRET environment variable is not defined!");
+  process.exit(1);
+}
 
 // 4. Implement gRPC Methods
 async function authenticate(call, callback) {
@@ -41,20 +45,7 @@ async function authenticate(call, callback) {
   try {
     let user = await User.findOne({ username });
     if (!user) {
-      // For demo purposes, auto-seed admin if it doesn't exist
-      if (username === 'admin' && password === 'admin') {
-        const hash = await bcrypt.hash(password, 12);
-        user = await User.create({ 
-          username, 
-          email: 'admin@kaalbhairav.local',
-          password: hash, 
-          role: 'admin',
-          fullName: 'System Administrator',
-          isActive: true
-        });
-      } else {
-        return callback(null, { token: '', success: false, message: 'Invalid credentials' });
-      }
+      return callback(null, { token: '', success: false, message: 'Invalid credentials' });
     }
 
     const storedPassword = user.password || user.passwordHash;
