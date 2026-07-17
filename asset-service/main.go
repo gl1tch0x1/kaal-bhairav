@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -1048,15 +1050,64 @@ func main() {
 		}
 	}
 
-	http.HandleFunc("/v1/search", searchHandler)
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/search", searchHandler)
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	})
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Kaal Bhairav Asset Service — OSINT Aggregator"))
 	})
 
+	server := &http.Server{
+		Addr:    ":50051",
+		Handler: mux,
+	}
+
+	// Server run context
+	serverCtx, serverStopCtx := context.WithCancel(context.Background())
+
+	// Listen for syscall signals for process to interrupt/terminate
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigChan
+		log.Printf("[%s] Initiating graceful shutdown...", sig.String())
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(serverCtx, 10*time.Second)
+		defer shutdownCancel()
+
+		go func() {
+			<-shutdownCtx.Done()
+			if shutdownCtx.Err() == context.DeadlineExceeded {
+				log.Fatal("Shutdown deadline exceeded, forcing exit.")
+			}
+		}()
+
+		// Trigger shutdown
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("Server shutdown error: %v", err)
+		}
+
+		if rdb != nil {
+			if err := rdb.Close(); err != nil {
+				log.Printf("Redis client close error: %v", err)
+			} else {
+				log.Println("Redis client connection closed.")
+			}
+		}
+
+		serverStopCtx()
+	}()
+
 	log.Println("Asset service listening on :50051")
-	log.Fatal(http.ListenAndServe(":50051", nil))
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		log.Fatalf("Server failed to listen: %v", err)
+	}
+
+	<-serverCtx.Done()
+	log.Println("Asset service shut down successfully.")
 }
+

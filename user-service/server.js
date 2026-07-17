@@ -11,12 +11,17 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('User Service connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// 2. Define User Schema
+// 2. Define User Schema (Aligned with Next.js Schema)
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
-  role: { type: String, default: 'analyst' }
-});
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  passwordHash: { type: String }, // Legacy database document support
+  role: { type: String, enum: ['admin', 'analyst', 'viewer'], default: 'analyst' },
+  fullName: { type: String },
+  isActive: { type: Boolean, default: true },
+  lastLogin: { type: Date }
+}, { timestamps: true });
 const User = mongoose.model('User', userSchema);
 
 // 3. Setup gRPC Proto
@@ -26,7 +31,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 });
 const userProto = grpc.loadPackageDefinition(packageDefinition).user;
 
-const JWT_SECRET = process.env.JWT_SECRET || 'kaal-bhairav-super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'kaal-bhairav-osint-secret-key-2024-ultra-secure';
 
 // 4. Implement gRPC Methods
 async function authenticate(call, callback) {
@@ -34,19 +39,30 @@ async function authenticate(call, callback) {
   console.log(`[gRPC] Authenticate Request: ${username}`);
   
   try {
-    const user = await User.findOne({ username });
+    let user = await User.findOne({ username });
     if (!user) {
       // For demo purposes, auto-seed admin if it doesn't exist
       if (username === 'admin' && password === 'admin') {
-        const hash = await bcrypt.hash(password, 10);
-        const newUser = await User.create({ username, passwordHash: hash, role: 'admin' });
-        const token = jwt.sign({ id: newUser._id, role: newUser.role }, JWT_SECRET, { expiresIn: '24h' });
-        return callback(null, { token, success: true, message: 'Admin seeded and authenticated' });
+        const hash = await bcrypt.hash(password, 12);
+        user = await User.create({ 
+          username, 
+          email: 'admin@kaalbhairav.local',
+          password: hash, 
+          role: 'admin',
+          fullName: 'System Administrator',
+          isActive: true
+        });
+      } else {
+        return callback(null, { token: '', success: false, message: 'Invalid credentials' });
       }
+    }
+
+    const storedPassword = user.password || user.passwordHash;
+    if (!storedPassword) {
       return callback(null, { token: '', success: false, message: 'Invalid credentials' });
     }
 
-    const isValid = await bcrypt.compare(password, user.passwordHash);
+    const isValid = await bcrypt.compare(password, storedPassword);
     if (!isValid) {
       return callback(null, { token: '', success: false, message: 'Invalid credentials' });
     }
@@ -59,6 +75,7 @@ async function authenticate(call, callback) {
   }
 }
 
+
 async function validateToken(call, callback) {
   const { token } = call.request;
   try {
@@ -70,18 +87,41 @@ async function validateToken(call, callback) {
 }
 
 // 5. Start Server
+let server;
+
 function main() {
-  const server = new grpc.Server();
+  server = new grpc.Server();
   server.addService(userProto.UserService.service, {
     Authenticate: authenticate,
     ValidateToken: validateToken
   });
   
   const port = process.env.PORT || 50051;
-  server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), (error, port) => {
+  server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), (error, bindPort) => {
     if (error) { console.error(error); return; }
-    console.log(`User Service (MongoDB Connected) running on port ${port}`);
+    console.log(`User Service (MongoDB Connected) running on port ${bindPort}`);
   });
 }
 
+const gracefulShutdown = async (signal) => {
+  console.log(`[${signal}] Initiating graceful shutdown...`);
+  try {
+    if (server) {
+      server.tryShutdown(() => {
+        console.log("gRPC server shut down successfully.");
+      });
+    }
+    await mongoose.connection.close();
+    console.log("MongoDB connection closed.");
+    process.exit(0);
+  } catch (err) {
+    console.error("Error during graceful shutdown:", err);
+    process.exit(1);
+  }
+};
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
 main();
+

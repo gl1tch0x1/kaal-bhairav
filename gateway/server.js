@@ -104,4 +104,24 @@ const start = async () => {
   }
 };
 
+const gracefulShutdown = async (signal) => {
+  fastify.log.info(`[${signal}] Initiating graceful shutdown...`);
+  try {
+    await fastify.close();
+    fastify.log.info("Fastify server closed.");
+    if (natsConnection) {
+      await natsConnection.close();
+      fastify.log.info("NATS connection closed.");
+    }
+    process.exit(0);
+  } catch (err) {
+    fastify.log.error("Error during graceful shutdown:", err);
+    process.exit(1);
+  }
+};
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
 start();
+

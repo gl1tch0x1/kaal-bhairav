@@ -46,8 +46,10 @@ export async function POST(req: NextRequest) {
 
     // LEGACY FALLBACK: If results are still empty or service is down
     if (results.length === 0) {
+      // Sanitize input: strip double quotes and backslashes to avoid query syntax failures
+      const sanitizedQuery = query.replace(/["\\]/g, "");
       let dbQuery: any = {
-        $text: { $search: `\"${query}\"` }
+        $text: { $search: `"${sanitizedQuery}"` }
       };
       if (queryType && queryType !== "all") {
         dbQuery.queryType = queryType;

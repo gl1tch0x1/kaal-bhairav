@@ -130,6 +130,14 @@ const OSINTResultSchema = new Schema({
 // Text index for robust search performance
 OSINTResultSchema.index({ query: "text", title: "text", snippet: "text" });
 
+// Relational and performance indexes
+InvestigationSchema.index({ createdAt: -1 });
+InvestigationSchema.index({ createdBy: 1 });
+AlertSchema.index({ userId: 1, isRead: 1 });
+TargetSchema.index({ investigationId: 1 });
+SearchHistorySchema.index({ userId: 1 });
+ActivityLogSchema.index({ createdAt: -1 });
+
 const CameraFeedSchema = new Schema({
   name: { type: String, required: true },
   location: { type: String, required: true },

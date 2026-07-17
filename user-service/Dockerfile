@@ -1,10 +1,14 @@
 FROM node:18-alpine
-
 WORKDIR /app
-COPY package.json ./
+
+# Cache package dependencies
+COPY user-service/package.json ./
 RUN npm install --production
 
-COPY server.js .
-# Proto definitions are volume mounted via docker-compose
+# Copy proto definitions for build-time availability
+COPY proto ./proto
+
+# Copy service source code
+COPY user-service/server.js .
 
 CMD ["node", "server.js"]

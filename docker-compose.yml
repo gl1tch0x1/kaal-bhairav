@@ -53,7 +53,9 @@ services:
     restart: unless-stopped
 
   user-service:
-    build: ./user-service
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
     container_name: kb-user-service
     depends_on:
       - mongodb
@@ -83,7 +85,9 @@ services:
     restart: unless-stopped
 
   ai-copilot-service:
-    build: ./ai-copilot-service
+    build:
+      context: .
+      dockerfile: ai-copilot-service/Dockerfile
     container_name: kb-ai-copilot-service
     depends_on:
       - nats
