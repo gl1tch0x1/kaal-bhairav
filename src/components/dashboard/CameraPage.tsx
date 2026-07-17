@@ -12,6 +12,7 @@ export default function CameraPage() {
   const [activeCam, setActiveCam] = useState<ICameraFeed | null>(null);
   const [customHost, setCustomHost] = useState("");
   const [tunnelUrl, setTunnelUrl] = useState("");
+  const [bypassToken, setBypassToken] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
 
   useEffect(() => {
@@ -39,13 +40,29 @@ export default function CameraPage() {
     return () => sse.close();
   }, [activeCam]);
 
+  const refreshBypassToken = () => {
+    fetch("/api/auth/token")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.token) {
+          setBypassToken(data.token);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch bypass token:", err));
+  };
+
+  useEffect(() => {
+    refreshBypassToken();
+    const interval = setInterval(refreshBypassToken, 240000); // Refresh every 4 minutes
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     fetch("/api/host-ip")
       .then((res) => res.json())
       .then((data) => {
         if (data.url) {
           setTunnelUrl(data.url);
-          setLinkUrl(`${data.url}/dashboard/surveillance`);
         } else if (data.ip && data.ip !== "localhost") {
           setCustomHost(data.ip);
         }
@@ -55,16 +72,21 @@ export default function CameraPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      let base = window.location.origin;
       if (customHost) {
         const port = window.location.port ? `:${window.location.port}` : "";
-        setLinkUrl(`http://${customHost}${port}/dashboard/surveillance`);
+        base = `http://${customHost}${port}`;
       } else if (tunnelUrl) {
-        setLinkUrl(`${tunnelUrl}/dashboard/surveillance`);
+        base = tunnelUrl;
+      }
+
+      if (bypassToken) {
+        setLinkUrl(`${base}/api/auth/bypass?token=${encodeURIComponent(bypassToken)}`);
       } else {
-        setLinkUrl(`${window.location.origin}/dashboard/surveillance`);
+        setLinkUrl(`${base}/dashboard/surveillance`);
       }
     }
-  }, [customHost, tunnelUrl]);
+  }, [customHost, tunnelUrl, bypassToken]);
 
 
 

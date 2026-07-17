@@ -40,3 +40,12 @@ export async function setSession(payload: JWTPayload): Promise<string> {
   const token = await signToken(payload);
   return token;
 }
+
+export async function signShortToken(payload: JWTPayload): Promise<string> {
+  return await new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(SECRET);
+}
+
