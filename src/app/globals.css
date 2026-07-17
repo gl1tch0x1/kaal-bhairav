@@ -275,4 +275,14 @@
   .badge-pending { @apply bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full text-xs font-semibold; }
   .badge-closed { @apply bg-slate-500/15 text-slate-400 border border-slate-500/30 px-2 py-0.5 rounded-full text-xs font-semibold; }
   .badge-archived { @apply bg-purple-500/15 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full text-xs font-semibold; }
+
+  /* Hide native browser password reveal eye controls */
+  input::-ms-reveal,
+  input::-ms-clear,
+  input::-webkit-contacts-auto-fill-button,
+  input::-webkit-credentials-auto-fill-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
 }
