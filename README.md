@@ -123,6 +123,27 @@ Scanning the generated QR code logs external devices in instantly:
 2. **Auto-Refresh Loop:** To prevent code timeouts on active monitors, the client automatically requests a fresh token every 4 minutes.
 3. **Bypass Verification (`/api/auth/bypass`):** When scanned, the device requests the bypass handler. The server validates the temporary token, generates a persistent 24-hour cookie, and drops it on the phone before redirecting directly to the CCTV feeds.
 
+#### Authentication Bypass Flow
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as Admin Browser (PC)
+    participant API as Next.js API (/api/auth/token)
+    actor Phone as Phone / Drone Browser
+    participant Bypass as Bypass API (/api/auth/bypass)
+    
+    Admin->>API: GET /api/auth/token (Every 4 mins)
+    API-->>Admin: Return signed 5-min temporary JWT
+    Admin->>Admin: Update QR Code with Token URL
+    
+    Note over Phone, Bypass: Admin scans QR Code
+    Phone->>Bypass: GET /api/auth/bypass?token=temp_jwt
+    Bypass->>Bypass: Verify temporary JWT
+    Bypass->>Bypass: Sign new 24-hour session JWT
+    Bypass-->>Phone: Set 'osint_token' Cookie & 302 Redirect
+    Phone->>Phone: Open /dashboard/surveillance (Authenticated!)
+```
+
 ---
 
 ## 🛠️ Technology Stack
@@ -150,19 +171,34 @@ Scanning the generated QR code logs external devices in instantly:
 
 ```text
 advanced-mern-osint-application/
-├── src/                    # Next.js Frontend App (UI, Components, Hooks, API routes)
-│   ├── app/                # App Router pages and proxy.ts route handlers
-│   └── components/         # Dashboard UI modules (Surveillance, Analytics, Map)
-├── gateway/                # Fastify API Gateway (REST -> gRPC bridge)
-├── user-service/           # Node.js Identity & RBAC Service (Mongoose aligned)
-├── asset-service/          # Go Service: Real-time Multi-source OSINT Aggregator
-├── camera-service/         # Rust Service: Video Processing & Inference
-├── ai-copilot-service/     # Python Service: LLM Abstraction & Chat
-├── proto/                  # Shared Protobuf definitions (Single source of truth)
-├── scripts/                # Utility and Database Seeding Scripts
-│   └── start-tunnel.js     # Public localtunnel controller
-├── docker-compose.yml      # Core infrastructure orchestration
-└── README.md               # System Documentation
+├── src/                    # Next.js Frontend App & REST API Routes
+│   ├── app/                # App Router pages and network proxy configurations
+│   │   ├── api/            # API Route Handlers
+│   │   │   ├── auth/       # Authentication Gateway Endpoints
+│   │   │   │   ├── bypass/ # QR code login bypass redirection
+│   │   │   │   ├── login/  # Primary credential login validation
+│   │   │   │   └── token/  # Ephemeral pairing token generators
+│   │   │   ├── host-ip/    # Dynamic network interface adaptors scanner
+│   │   │   └── surveillance/ # Camera streams and SSE telemetry pushes
+│   │   ├── dashboard/      # Protected dashboard views (surveillance, maps, search)
+│   │   ├── layout.tsx      # Global HTML configuration
+│   │   └── page.tsx        # Entry login landing component
+│   ├── components/         # Premium React visual component overlays
+│   │   └── dashboard/      # Interactive dashboard tabs (CCTV frames, threat charts)
+│   ├── db/                 # Database connection templates and schemas
+│   ├── lib/                # Shared encryption, JWT, and helper utilities
+│   ├── proxy.ts            # Next.js 16 Network request boundary & gatekeeper
+│   └── globals.css         # Custom CSS theme with glassmorphic variables
+├── gateway/                # Fastify API Gateway (gRPC proxy layer)
+├── user-service/           # Identity Management & RBAC Service (gRPC/Node)
+├── asset-service/          # Threat Intel Aggregator Service (Go/Redis)
+├── camera-service/         # CCTV RTSP stream frame analyzer (Rust/Tonic)
+├── ai-copilot-service/     # Chat copilot interface (Python/LLM integration)
+├── proto/                  # Protobuf contract definitions for inter-service communication
+├── scripts/                # Utility shell scripts and server operations tools
+│   └── start-tunnel.js     # Public network exposure daemon
+├── docker-compose.yml      # Orchestration system
+└── README.md               # User & Architecture Manual
 ```
 
 ---
