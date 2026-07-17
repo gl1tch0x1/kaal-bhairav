@@ -791,7 +791,7 @@ func normalizeOTX(query, queryType string, raw map[string]interface{}) []Normali
 // Fan-out orchestrator: run all applicable providers concurrently
 // =============================================================================
 
-func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
+func runSearch(parentCtx context.Context, cfg Config, req SearchRequest) []NormalizedResult {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var allResults []NormalizedResult
@@ -815,7 +815,7 @@ func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
 		for _, ep := range webCheckEndpoints {
 			ep := ep // capture loop variable
 			cKey := cacheKey(ep.category, queryType, query)
-			if cached, ok := cacheGet(context.Background(), cKey); ok {
+			if cached, ok := cacheGet(parentCtx, cKey); ok {
 				log.Printf("[cache HIT] %s", cKey)
 				addResults(cached)
 				continue
@@ -823,11 +823,11 @@ func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+				ctx, cancel := context.WithTimeout(parentCtx, 4*time.Second)
 				defer cancel()
 				results, err := fetchWebCheck(ctx, cfg, query, ep.category, ep.check)
 				if err == nil && len(results) > 0 {
-					cacheSet(context.Background(), cKey, ep.category, results)
+					cacheSet(parentCtx, cKey, ep.category, results)
 					addResults(results)
 				}
 			}()
@@ -835,18 +835,18 @@ func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
 
 		// crt.sh (always active for domains)
 		crtKey := cacheKey("subdomain", queryType, query)
-		if cached, ok := cacheGet(context.Background(), crtKey); ok {
+		if cached, ok := cacheGet(parentCtx, crtKey); ok {
 			log.Printf("[cache HIT] %s", crtKey)
 			addResults(cached)
 		} else {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				ctx, cancel := context.WithTimeout(parentCtx, 5*time.Second)
 				defer cancel()
 				results, err := fetchCrtSh(ctx, query)
 				if err == nil && len(results) > 0 {
-					cacheSet(context.Background(), crtKey, "subdomain", results)
+					cacheSet(parentCtx, crtKey, "subdomain", results)
 					addResults(results)
 				}
 			}()
@@ -855,18 +855,18 @@ func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
 		// VirusTotal for domains
 		if cfg.VTAPIKey != "" {
 			vtKey := cacheKey("reputation", queryType, query)
-			if cached, ok := cacheGet(context.Background(), vtKey); ok {
+			if cached, ok := cacheGet(parentCtx, vtKey); ok {
 				log.Printf("[cache HIT] %s", vtKey)
 				addResults(cached)
 			} else {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+					ctx, cancel := context.WithTimeout(parentCtx, 4*time.Second)
 					defer cancel()
 					results, err := fetchVirusTotal(ctx, cfg, query, queryType)
 					if err == nil && len(results) > 0 {
-						cacheSet(context.Background(), vtKey, "reputation", results)
+						cacheSet(parentCtx, vtKey, "reputation", results)
 						addResults(results)
 					}
 				}()
@@ -876,18 +876,18 @@ func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
 		// OTX for domains
 		if cfg.OTXAPIKey != "" {
 			otxKey := cacheKey("threat", queryType, query)
-			if cached, ok := cacheGet(context.Background(), otxKey); ok {
+			if cached, ok := cacheGet(parentCtx, otxKey); ok {
 				log.Printf("[cache HIT] %s", otxKey)
 				addResults(cached)
 			} else {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+					ctx, cancel := context.WithTimeout(parentCtx, 4*time.Second)
 					defer cancel()
 					results, err := fetchOTX(ctx, cfg, query, queryType)
 					if err == nil && len(results) > 0 {
-						cacheSet(context.Background(), otxKey, "threat", results)
+						cacheSet(parentCtx, otxKey, "threat", results)
 						addResults(results)
 					}
 				}()
@@ -900,18 +900,18 @@ func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
 		// Shodan
 		if cfg.ShodanAPIKey != "" {
 			shodanKey := cacheKey("ports", queryType, query)
-			if cached, ok := cacheGet(context.Background(), shodanKey); ok {
+			if cached, ok := cacheGet(parentCtx, shodanKey); ok {
 				log.Printf("[cache HIT] %s", shodanKey)
 				addResults(cached)
 			} else {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+					ctx, cancel := context.WithTimeout(parentCtx, 5*time.Second)
 					defer cancel()
 					results, err := fetchShodan(ctx, cfg, query)
 					if err == nil && len(results) > 0 {
-						cacheSet(context.Background(), shodanKey, "ports", results)
+						cacheSet(parentCtx, shodanKey, "ports", results)
 						addResults(results)
 					}
 				}()
@@ -921,18 +921,18 @@ func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
 		// AbuseIPDB
 		if cfg.AbuseIPDBAPIKey != "" {
 			abuseKey := cacheKey("reputation", queryType, query)
-			if cached, ok := cacheGet(context.Background(), abuseKey); ok {
+			if cached, ok := cacheGet(parentCtx, abuseKey); ok {
 				log.Printf("[cache HIT] %s", abuseKey)
 				addResults(cached)
 			} else {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+					ctx, cancel := context.WithTimeout(parentCtx, 4*time.Second)
 					defer cancel()
 					results, err := fetchAbuseIPDB(ctx, cfg, query)
 					if err == nil && len(results) > 0 {
-						cacheSet(context.Background(), abuseKey, "reputation", results)
+						cacheSet(parentCtx, abuseKey, "reputation", results)
 						addResults(results)
 					}
 				}()
@@ -942,18 +942,18 @@ func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
 		// VirusTotal for IPs
 		if cfg.VTAPIKey != "" {
 			vtKey := cacheKey("reputation", queryType, query)
-			if cached, ok := cacheGet(context.Background(), vtKey); ok {
+			if cached, ok := cacheGet(parentCtx, vtKey); ok {
 				log.Printf("[cache HIT] %s", vtKey)
 				addResults(cached)
 			} else {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+					ctx, cancel := context.WithTimeout(parentCtx, 4*time.Second)
 					defer cancel()
 					results, err := fetchVirusTotal(ctx, cfg, query, queryType)
 					if err == nil && len(results) > 0 {
-						cacheSet(context.Background(), vtKey, "reputation", results)
+						cacheSet(parentCtx, vtKey, "reputation", results)
 						addResults(results)
 					}
 				}()
@@ -963,18 +963,18 @@ func runSearch(cfg Config, req SearchRequest) []NormalizedResult {
 		// OTX for IPs
 		if cfg.OTXAPIKey != "" {
 			otxKey := cacheKey("threat", queryType, query)
-			if cached, ok := cacheGet(context.Background(), otxKey); ok {
+			if cached, ok := cacheGet(parentCtx, otxKey); ok {
 				log.Printf("[cache HIT] %s", otxKey)
 				addResults(cached)
 			} else {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+					ctx, cancel := context.WithTimeout(parentCtx, 4*time.Second)
 					defer cancel()
 					results, err := fetchOTX(ctx, cfg, query, queryType)
 					if err == nil && len(results) > 0 {
-						cacheSet(context.Background(), otxKey, "threat", results)
+						cacheSet(parentCtx, otxKey, "threat", results)
 						addResults(results)
 					}
 				}()
@@ -1012,7 +1012,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[search] query=%q queryType=%q", req.Query, req.QueryType)
 
-	normalized := runSearch(globalCfg, req)
+	normalized := runSearch(r.Context(), globalCfg, req)
 
 	// Convert to map slice (the contract the Next.js route expects)
 	results := make([]map[string]interface{}, 0, len(normalized))

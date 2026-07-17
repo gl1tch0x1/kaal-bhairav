@@ -11,6 +11,8 @@ export async function GET(req: NextRequest) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  let interval: NodeJS.Timeout;
+
   const stream = new ReadableStream({
     async start(controller) {
       await connectDB();
@@ -24,6 +26,10 @@ export async function GET(req: NextRequest) {
           controller.enqueue(`data: ${data}\n\n`);
         } catch (err) {
           console.error("SSE Surveillance Error:", err);
+          clearInterval(interval);
+          try {
+            controller.close();
+          } catch {}
         }
       };
 
@@ -31,13 +37,15 @@ export async function GET(req: NextRequest) {
       await sendUpdate();
 
       // Poll database every 5 seconds and push to client
-      const interval = setInterval(async () => {
+      interval = setInterval(async () => {
         await sendUpdate();
       }, 5000);
 
       req.signal.addEventListener("abort", () => {
         clearInterval(interval);
-        controller.close();
+        try {
+          controller.close();
+        } catch {}
       });
     }
   });
