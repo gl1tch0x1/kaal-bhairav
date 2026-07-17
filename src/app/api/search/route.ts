@@ -17,20 +17,44 @@ export async function POST(req: NextRequest) {
     const parsed = SearchSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { query, queryType, investigationId } = parsed.data;
 
-    // Fetch matching OSINT results using MongoDB Text Index for maximum performance
-    let dbQuery: any = {
-      $text: { $search: query }
-    };
-    if (queryType && queryType !== "all") {
-      dbQuery.queryType = queryType;
+    let results = [];
+    
+    // API GATEWAY PATTERN: Try to fetch from Go Microservice if available
+    const GO_SERVICE_URL = process.env.GO_SERVICE_URL;
+    if (GO_SERVICE_URL) {
+      try {
+        const res = await fetch(`${GO_SERVICE_URL}/v1/search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, queryType, investigationId }),
+          // Timeout to fallback quickly if service is down
+          signal: AbortSignal.timeout(3000), 
+        });
+        if (res.ok) {
+          const data = await res.json();
+          results = data.results;
+        }
+      } catch (e) {
+        console.warn("Go service search failed, falling back to legacy DB search", e);
+      }
     }
 
-    const results = await OSINTResult.find(dbQuery).limit(50);
+    // LEGACY FALLBACK: If results are still empty or service is down
+    if (results.length === 0) {
+      let dbQuery: any = {
+        $text: { $search: query }
+      };
+      if (queryType && queryType !== "all") {
+        dbQuery.queryType = queryType;
+      }
+
+      results = await OSINTResult.find(dbQuery).limit(50);
+    }
 
     const record = await SearchHistory.create({
       userId: auth.userId,

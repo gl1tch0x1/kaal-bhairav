@@ -17,19 +17,20 @@ It provides cyber-intelligence analysts with a unified interface to monitor targ
 
 ## ✨ Key Features
 
-- **🛡️ Live Threat Feed:** Real-time stream of parsed Indicators of Compromise (IOCs) such as malicious IPs, domains, and phishing campaigns.
-- **🕸️ Network Topology Mapping:** Interactive, force-directed graph rendering interconnected nodes (targets, IPs, domains) for link analysis.
+- **🛡️ Live Threat Feed:** Real-time stream of parsed Indicators of Compromise (IOCs) such as malicious IPs, domains, and phishing campaigns (Supported by MITRE & CVE Feed Integrations).
+- **🕸️ Network Topology Mapping:** Advanced Geographic Information System (GIS) mapping powered by Leaflet and MapLibre for precise threat localization.
 - **🎥 Live Surveillance Module:** Simulated CCTV management console with live polling of detection logs, camera connection telemetry, and active threat events.
 - **🎯 Target Management:** Track and monitor specific individuals or infrastructure targets with calculated risk scores and status updates.
 - **🔍 OSINT Search Engine:** Comprehensive search interface simulating queries across multiple external intelligence databases.
-- **🚀 Ultra-Optimized Architecture:** Built with React `useMemo`, lazy-loaded components (`next/dynamic`), and custom skeleton UI loaders for maximum performance.
-- **🔒 Secure Authentication:** Private, authenticated access utilizing secure session management (default `admin` / `admin`).
+- **🚀 Ultra-Optimized Architecture:** Built with React `useMemo`, `Zustand` global state, `@tanstack/react-query`, and `framer-motion` animations.
+- **⚙️ Polyglot Microservices:** Highly-scalable distributed architecture incorporating high-performance Rust, Go, and Python stubs behind an API Gateway.
+- **🔒 Security & Observability:** Secure session management (JWT), combined with Prometheus & Grafana for distributed telemetry and structured JSON logging.
 
 ---
 
 ## 🏗️ System Architecture
 
-The application follows a modernized MERN (MongoDB, Express/API routes, React, Node.js) architecture integrated tightly within the Next.js 14+ App Router framework.
+The application transitioned from a MERN monolith to a distributed Polyglot Microservice architecture.
 
 ```mermaid
 graph TD
@@ -41,39 +42,37 @@ graph TD
         UI --> Components
     end
 
-    subgraph API [Next.js API Routes - Backend]
+    subgraph API [Next.js API Gateway]
         Router["/api/* Endpoints"]
         Auth[Auth Controller]
-        Search[Search Service]
-        Surveillance[Surveillance Polling]
-        DataFeeds[Data Feed Handlers]
+        Search[Gateway Service]
+    end
+    
+    subgraph Microservices [Core Defensive Services]
+        Go[Go: Background Scheduler]
+        Rust[Rust: High-Perf Endpoints]
+        Python[Python: AI Copilot FastAPI]
     end
 
-    subgraph Database [MongoDB - Persistence]
+    subgraph Database [MongoDB & Observability]
         DB[(MongoDB Local)]
-        Users[Users Collection]
-        Investigations[Investigations Collection]
-        Feeds[FeedItems Collection]
-        Nodes[Network Nodes & Links]
-        Cameras[Cameras & Events]
+        Redis[(Redis Cache)]
+        Prom[Prometheus]
+        Graf[Grafana]
     end
 
     %% Flow
     Client -- HTTP GET/POST --> Router
     Router --> Auth
     Router --> Search
-    Router --> Surveillance
-    Router --> DataFeeds
-
-    Auth -- Mongoose --> Users
-    Search -- Mongoose --> Investigations
-    DataFeeds -- Mongoose --> Feeds
-    Surveillance -- Mongoose --> Cameras
-    DataFeeds -- Mongoose --> Nodes
     
-    style Client fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff
-    style API fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#fff
-    style Database fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#fff
+    Search -- RPC / Fetch --> Go
+    Search -- RPC / Fetch --> Rust
+    Search -- RPC / Fetch --> Python
+
+    Auth -- Mongoose --> DB
+    Search -- Mongoose --> DB
+    Search -- Redis --> Redis
 ```
 
 ### 🗄️ Database Schema Topology
@@ -95,21 +94,6 @@ erDiagram
         string passwordHash
         string role
     }
-    
-    NETWORK_NODE {
-        string nodeId
-        string type
-        string label
-        string ip
-        string risk
-    }
-    
-    CAMERA {
-        string name
-        string location
-        string status
-        number fps
-    }
 ```
 
 ---
@@ -117,10 +101,13 @@ erDiagram
 ## 🛠️ Technology Stack
 
 - **Frontend Framework:** [Next.js](https://nextjs.org/) (React, App Router)
-- **Styling:** Tailwind CSS & Lucide Icons (Glassmorphism & modern dark aesthetics)
-- **Data Visualization:** Recharts (Analytical Charts), React-Force-Graph-2D (Network Mapping)
-- **Backend Environment:** Node.js API Routes (Next.js serverless functions)
-- **Database:** MongoDB & Mongoose ORM
+- **State Management:** Zustand, @tanstack/react-query
+- **Styling:** Tailwind CSS, Framer Motion, Lucide Icons
+- **Data Visualization:** Recharts (Analytical Charts), React-Leaflet (GIS Mapping)
+- **Microservices:** Rust (warp), Go, Python (FastAPI)
+- **Backend API Gateway:** Node.js (Next.js serverless functions)
+- **Database & Cache:** MongoDB & Mongoose ORM, Redis
+- **Observability:** Prometheus, Grafana, Structured JSON Logger
 - **Authentication:** Custom session-based JWT authentication
 
 ---
@@ -130,7 +117,7 @@ erDiagram
 Before you begin, ensure you have the following installed on your machine:
 - **Node.js:** `v18.x` or higher
 - **NPM:** `v9.x` or higher
-- **MongoDB:** A running local MongoDB instance (`mongodb://127.0.0.1:27017`) or a MongoDB Atlas cluster.
+- **Docker & Docker Compose:** Required to run MongoDB, Redis, Prometheus, and Grafana simultaneously.
 
 ---
 
@@ -157,18 +144,24 @@ Before you begin, ensure you have the following installed on your machine:
    JWT_SECRET=super_secret_jwt_key_kaal_bhairav_2026
    ```
 
-4. **Seed the Database:**
+4. **Boot up Core Infrastructure:**
+   Run Docker Compose to spin up MongoDB, Redis, Prometheus, and Grafana:
+   ```bash
+   docker-compose up -d
+   ```
+
+5. **Seed the Database:**
    Populate the database with the initial mock intelligence data, network nodes, and the default admin user.
    ```bash
    npm run seed
    ```
 
-5. **Start the Development Server:**
+6. **Start the Development Server:**
    ```bash
    npm run dev
    ```
 
-6. **Access the Application:**
+7. **Access the Application:**
    Open your browser and navigate to `http://localhost:3000`.
 
 ---

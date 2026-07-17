@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: kb-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=osint
+
+  redis:
+    image: redis:alpine
+    container_name: kb-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # Placeholder for Go Services
+  # go-services:
+  #   build: ./go-services
+  #   ports:
+  #     - "50051:50051"
+
+  # Placeholder for Python AI Services
+  # python-services:
+  #   build: ./python-services
+  #   ports:
+  #     - "8000:8000"
+
+  # Placeholder for Rust Services
+  # rust-services:
+  #   build: ./rust-services
+
+  # Prometheus for Metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: kb-prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
+
+  # Grafana for Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: kb-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+  redis_data:

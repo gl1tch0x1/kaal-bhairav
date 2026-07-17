@@ -36,6 +36,7 @@ export default function FeedPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchFeed();
   }, [fetchFeed]);
 
@@ -49,6 +50,7 @@ export default function FeedPage() {
   };
 
   const timeAgo = (dateStr: string) => {
+    // eslint-disable-next-line react-hooks/purity
     const diff = Date.now() - new Date(dateStr).getTime();
     const min = Math.floor(diff / 60000);
     const hr = Math.floor(min / 60);

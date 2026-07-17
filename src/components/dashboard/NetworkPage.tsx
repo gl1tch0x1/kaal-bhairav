@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 
 import { INetworkNode, INetworkLink } from "@/types";
 
+const MapModule = dynamic(() => import("./MapModule"), { ssr: false, loading: () => <div className="flex-1 min-h-[500px] flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div></div> });
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false, loading: () => <div className="flex-1 min-h-[500px] flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div></div> });
 
 const NODE_COLORS: Record<string, { fill: string; stroke: string; text: string }> = {
@@ -49,7 +50,7 @@ export default function NetworkPage() {
     
     const gNodes = nodes.map(n => ({ 
       ...n, 
-      val: n.risk === "critical" ? 25 : n.risk === "high" ? 15 : 8 
+      val: n.risk === "critical" ? 12 : n.risk === "high" ? 8 : 5 
     }));
 
     const gLinks: Array<{ source: string; target: string }> = [];
@@ -65,7 +66,7 @@ export default function NetworkPage() {
         const targetNode = nodes.find(n => n.id === targetStr);
         if (sourceNode && targetNode) {
           edgesList.push({ from: sourceNode, to: targetNode });
-          gLinks.push({ source: link.source, target: link.target });
+          gLinks.push({ source: sourceStr, target: targetStr });
         }
       }
     });
@@ -140,69 +141,88 @@ export default function NetworkPage() {
 
           <div 
             ref={setContainer} 
-            className="relative flex-1 bg-[#030710] min-h-[500px]"
+            className="flex flex-col gap-4"
           >
-            {/* Grid overlay */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
-              backgroundImage: "linear-gradient(rgba(8,145,178,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(8,145,178,0.5) 1px, transparent 1px)",
-              backgroundSize: "40px 40px"
-            }} />
+            {/* GIS Map Module */}
+            <div className="relative bg-[#030710] min-h-[400px] rounded-xl overflow-hidden border border-[#1e3a5f]/40">
+              {container && !loading && (
+                <MapModule 
+                  threats={nodes.map(n => ({
+                    id: n.id,
+                    lat: (n.id.length * 5) % 180 - 90,
+                    lng: (n.id.length * 10) % 360 - 180,
+                    risk: n.risk,
+                    desc: n.label || n.id
+                  }))}
+                />
+              )}
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                </div>
+              )}
+            </div>
 
-            {container && !loading && (
-              <ForceGraph2D
-                width={container.clientWidth}
-                height={container.clientHeight || 500}
-                graphData={graphData}
-                nodeRelSize={6}
-                nodeColor={(node: any) => NODE_COLORS[node.type]?.fill || "#0891b2"}
-                linkColor={() => "rgba(8,145,178,0.3)"}
-                linkWidth={1.5}
-                linkDirectionalParticles={2}
-                linkDirectionalParticleWidth={2}
-                linkDirectionalParticleSpeed={0.005}
-                nodeCanvasObject={(node: any, ctx, globalScale) => {
-                  const label = node.label || node.id;
-                  const isSelected = selectedNode?.id === node.id;
-                  const colors = NODE_COLORS[node.type] || NODE_COLORS.ip;
-                  
-                  const fontSize = 12/globalScale;
-                  ctx.font = `${fontSize}px Sans-Serif`;
-                  
-                  // Node Circle
-                  ctx.beginPath();
-                  ctx.arc(node.x, node.y, node.val, 0, 2 * Math.PI, false);
-                  ctx.fillStyle = colors.fill;
-                  ctx.fill();
-                  
-                  // Selected Glow/Border
-                  if (isSelected) {
+            {/* Force Directed Graph */}
+            <div className="relative bg-[#030710] min-h-[500px] rounded-xl overflow-hidden border border-[#1e3a5f]/40">
+              <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
+                backgroundImage: "linear-gradient(rgba(8,145,178,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(8,145,178,0.5) 1px, transparent 1px)",
+                backgroundSize: "40px 40px"
+              }} />
+              
+              {container && !loading && (
+                <ForceGraph2D
+                  width={container.clientWidth}
+                  height={500}
+                  graphData={graphData}
+                  nodeRelSize={6}
+                  nodeColor={(node: any) => NODE_COLORS[node.type]?.fill || "#0891b2"}
+                  linkColor={() => "rgba(8,145,178,0.3)"}
+                  linkWidth={1.5}
+                  linkDirectionalParticles={2}
+                  linkDirectionalParticleWidth={2}
+                  linkDirectionalParticleSpeed={0.005}
+                  nodeCanvasObject={(node: any, ctx, globalScale) => {
+                    const label = node.label || node.id;
+                    const isSelected = selectedNode?.id === node.id;
+                    const colors = NODE_COLORS[node.type] || NODE_COLORS.ip;
+                    
                     ctx.beginPath();
-                    ctx.arc(node.x, node.y, node.val + 2, 0, 2 * Math.PI, false);
-                    ctx.strokeStyle = colors.stroke;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                  }
+                    ctx.arc(node.x, node.y, node.val, 0, 2 * Math.PI, false);
+                    ctx.fillStyle = colors.fill;
+                    ctx.fill();
+                    
+                    if (isSelected) {
+                      ctx.beginPath();
+                      ctx.arc(node.x, node.y, node.val + 2, 0, 2 * Math.PI, false);
+                      ctx.strokeStyle = colors.stroke;
+                      ctx.lineWidth = 1.5 / globalScale;
+                      ctx.stroke();
+                    }
 
-                  // Label
-                  const textWidth = ctx.measureText(label).width;
-                  const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
-                  
-                  ctx.fillStyle = 'rgba(3, 7, 16, 0.8)';
-                  ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + node.val + 2, bckgDimensions[0], bckgDimensions[1]);
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillStyle = colors.text;
-                  ctx.fillText(label, node.x, node.y + node.val + 2 + fontSize/2);
-                }}
-                onNodeClick={(node) => setSelectedNode(node)}
-                onBackgroundClick={() => setSelectedNode(null)}
-              />
-            )}
-            {loading && (
-               <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-               </div>
-            )}
+                    // Only draw labels if we're zoomed in enough or if the node is selected
+                    if (globalScale >= 1.2 || isSelected) {
+                      const fontSize = 12 / globalScale;
+                      ctx.font = `${fontSize}px Sans-Serif`;
+                      const textWidth = ctx.measureText(label).width;
+                      const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
+                      
+                      const labelY = node.y + node.val + (4 / globalScale) + bckgDimensions[1] / 2;
+                      
+                      ctx.fillStyle = 'rgba(3, 7, 16, 0.85)';
+                      ctx.fillRect(node.x - bckgDimensions[0] / 2, labelY - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
+                      
+                      ctx.textAlign = 'center';
+                      ctx.textBaseline = 'middle';
+                      ctx.fillStyle = colors.text;
+                      ctx.fillText(label, node.x, labelY);
+                    }
+                  }}
+                  onNodeClick={(node) => setSelectedNode(node as INetworkNode)}
+                  onBackgroundClick={() => setSelectedNode(null)}
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -270,18 +290,30 @@ export default function NetworkPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Connections</span>
-                    <span className="text-white font-mono text-xs">{links.filter(l => l.source === selectedNode.id || l.target === selectedNode.id).length}</span>
+                    <span className="text-white font-mono text-xs">
+                      {links.filter(l => {
+                        const sId = typeof l.source === 'string' ? l.source : l.source.id;
+                        const tId = typeof l.target === 'string' ? l.target : l.target.id;
+                        return sId === selectedNode.id || tId === selectedNode.id;
+                      }).length}
+                    </span>
                   </div>
                 </div>
 
                 <div>
                   <h5 className="text-[10px] uppercase text-slate-500 mb-2">Direct Links</h5>
                   <div className="space-y-1 max-h-[100px] overflow-y-auto custom-scrollbar">
-                    {links.filter(l => l.source === selectedNode.id || l.target === selectedNode.id).map(l => {
-                      const otherId = l.source === selectedNode.id ? l.target : l.source;
+                    {links.filter(l => {
+                      const sId = typeof l.source === 'string' ? l.source : l.source.id;
+                      const tId = typeof l.target === 'string' ? l.target : l.target.id;
+                      return sId === selectedNode.id || tId === selectedNode.id;
+                    }).map((l, i) => {
+                      const sId = typeof l.source === 'string' ? l.source : l.source.id;
+                      const tId = typeof l.target === 'string' ? l.target : l.target.id;
+                      const otherId = sId === selectedNode.id ? tId : sId;
                       const otherNode = nodes.find(n => n.id === otherId);
                       return otherNode ? (
-                        <div key={otherId} className="text-xs flex items-center gap-2 text-slate-400 bg-[#0d1b2e] p-1.5 rounded">
+                        <div key={`${otherId}-${i}`} className="text-xs flex items-center gap-2 text-slate-400 bg-[#0d1b2e] p-1.5 rounded">
                           <ArrowRight className="w-3 h-3 text-emerald-400 flex-shrink-0" />
                           <span className="truncate">{otherNode.label}</span>
                         </div>

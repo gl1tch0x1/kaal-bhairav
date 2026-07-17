@@ -169,7 +169,7 @@ export default function CameraPage() {
                   </div>
                   <p className="text-xs text-slate-300 mt-1.5">{event.description}</p>
                   <p className="text-[10px] text-cyan-500 font-mono mt-1 pt-1 border-t border-[#1e3a5f]/30">
-                    Source: {event.cameraId?.name || "Unknown"}
+                    Source: {typeof event.cameraId === "object" ? (event.cameraId as any)?.name : event.cameraId || "Unknown"}
                   </p>
                 </div>
               ))

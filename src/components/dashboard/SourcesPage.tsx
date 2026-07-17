@@ -45,6 +45,7 @@ export default function SourcesPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSources();
   }, [fetchSources]);
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import Providers from "./Providers";
 
 export const metadata: Metadata = {
   title: "KaalBhairav OSINT Platform",
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         className="bg-[#050b14] text-[#e8f4fd] antialiased"
         style={{ fontFamily: "'Inter', sans-serif" }}
       >
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

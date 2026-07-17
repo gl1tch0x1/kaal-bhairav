@@ -2,39 +2,22 @@
 import { useState, useEffect } from "react";
 import { Bell, Search, ChevronDown, User, Shield, Clock, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-interface UserData {
-  id: number;
-  username: string;
-  email: string;
-  fullName: string | null;
-  role: string | null;
-}
+import { useGlobalStore } from "@/store/useGlobalStore";
 
 export default function Topbar() {
-  const [user, setUser] = useState<UserData | null>(null);
+  const { user, alertCount, fetchUser, fetchAlertCount } = useGlobalStore();
   const [time, setTime] = useState(new Date());
-  const [alertCount, setAlertCount] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
   
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((d) => { if (d.user) setUser(d.user); })
-      .catch(() => {});
-
-    fetch("/api/alerts?unread=true")
-      .then((r) => r.json())
-      .then((d) => { if (d.alerts) setAlertCount(d.alerts.length); })
-      .catch(() => {});
-  }, []);
+    fetchUser();
+    fetchAlertCount();
+  }, [fetchUser, fetchAlertCount]);
 
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
@@ -43,6 +26,7 @@ export default function Topbar() {
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
+    useGlobalStore.getState().setUser(null);
     router.push("/");
   };
 

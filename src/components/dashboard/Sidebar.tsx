@@ -9,6 +9,7 @@ import {
   Zap, Eye, Video
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface NavItem {
   label: string;
@@ -47,11 +48,13 @@ export default function Sidebar() {
   };
 
   return (
-    <aside
+    <motion.aside
+      initial={{ width: 240 }}
+      animate={{ width: collapsed ? 68 : 240 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "relative flex flex-col h-screen transition-all duration-300 ease-in-out z-30",
-        "bg-[#070e1a] border-r border-[#1e3a5f]/60",
-        collapsed ? "w-[68px]" : "w-[240px]"
+        "relative flex flex-col h-screen z-30",
+        "bg-[#070e1a]/90 backdrop-blur-xl border-r border-[#1e3a5f]/60"
       )}
     >
       {/* Logo */}
@@ -107,22 +110,30 @@ export default function Sidebar() {
               )}
             >
               {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-cyan-400 rounded-r-full" />
+                <motion.div layoutId="activeNav" className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-cyan-400 rounded-r-full" />
               )}
               <item.icon className={cn(
                 "flex-shrink-0 w-4 h-4",
                 isActive ? "text-cyan-400" : "text-slate-600 group-hover:text-slate-400"
               )} />
-              {!collapsed && (
-                <>
-                  <span className="flex-1 font-medium text-xs">{item.label}</span>
-                  {item.badge && (
-                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider", item.badgeColor)}>
-                      {item.badge}
-                    </span>
-                  )}
-                </>
-              )}
+              <AnimatePresence>
+                {!collapsed && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex-1 flex items-center justify-between"
+                  >
+                    <span className="font-medium text-xs">{item.label}</span>
+                    {item.badge && (
+                      <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider", item.badgeColor)}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </Link>
           );
         })}
@@ -161,6 +172,6 @@ export default function Sidebar() {
           </div>
         </div>
       )}
-    </aside>
+    </motion.aside>
   );
 }
