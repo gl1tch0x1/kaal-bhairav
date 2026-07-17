@@ -1,7 +1,24 @@
 import { NextResponse } from "next/server";
 import os from "os";
+import fs from "fs";
+import path from "path";
 
 export async function GET() {
+  // First, check if a public localtunnel is running and parse its URL
+  try {
+    const logPath = path.join(process.cwd(), "tunnel.txt");
+    if (fs.existsSync(logPath)) {
+      const content = fs.readFileSync(logPath, "utf-8");
+      // Search for URL pattern like: url: https://wise-radios-double.loca.lt
+      const match = content.match(/url:\s+(https:\/\/[^\s]+)/i);
+      if (match && match[1]) {
+        return NextResponse.json({ url: match[1].trim() });
+      }
+    }
+  } catch (err) {
+    console.error("Failed to read tunnel log:", err);
+  }
+
   const interfaces = os.networkInterfaces();
   let fallbackIp = "";
 
@@ -10,10 +27,8 @@ export async function GET() {
     if (!networkInterface) continue;
 
     for (const iface of networkInterface) {
-      // Look for non-internal IPv4 address (e.g. 192.168.x.x)
       if (iface.family === "IPv4" && !iface.internal) {
         const interfaceName = name.toLowerCase();
-        // Prioritize Wi-Fi, Ethernet, and WLAN interfaces
         if (
           interfaceName.includes("wi-fi") || 
           interfaceName.includes("ethernet") || 

@@ -11,6 +11,7 @@ export default function CameraPage() {
   const [loading, setLoading] = useState(true);
   const [activeCam, setActiveCam] = useState<ICameraFeed | null>(null);
   const [customHost, setCustomHost] = useState("");
+  const [tunnelUrl, setTunnelUrl] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
 
   useEffect(() => {
@@ -42,7 +43,10 @@ export default function CameraPage() {
     fetch("/api/host-ip")
       .then((res) => res.json())
       .then((data) => {
-        if (data.ip && data.ip !== "localhost") {
+        if (data.url) {
+          setTunnelUrl(data.url);
+          setLinkUrl(`${data.url}/dashboard/surveillance`);
+        } else if (data.ip && data.ip !== "localhost") {
           setCustomHost(data.ip);
         }
       })
@@ -51,11 +55,16 @@ export default function CameraPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const port = window.location.port ? `:${window.location.port}` : "";
-      const base = customHost ? `http://${customHost}${port}` : window.location.origin;
-      setLinkUrl(`${base}/dashboard/surveillance`);
+      if (customHost) {
+        const port = window.location.port ? `:${window.location.port}` : "";
+        setLinkUrl(`http://${customHost}${port}/dashboard/surveillance`);
+      } else if (tunnelUrl) {
+        setLinkUrl(`${tunnelUrl}/dashboard/surveillance`);
+      } else {
+        setLinkUrl(`${window.location.origin}/dashboard/surveillance`);
+      }
     }
-  }, [customHost]);
+  }, [customHost, tunnelUrl]);
 
 
 
