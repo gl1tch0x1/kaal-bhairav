@@ -30,8 +30,14 @@ export default function LoginPage() {
     setError("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleToggleShowPassword = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    setShowPassword((prev) => !prev);
+  };
+
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) e.preventDefault();
     setLoading(true);
     setError("");
 
@@ -243,15 +249,16 @@ export default function LoginPage() {
                     value={form.password || ""}
                     onChange={handleChange}
                     required
-                    className="w-full input-dark pl-10 pr-11 py-3 rounded-xl text-sm font-mono"
+                    className="w-full input-dark pl-10 pr-12 py-3 rounded-xl text-sm font-mono"
                     placeholder="••••••••••••"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors z-20"
+                    onMouseDown={handleToggleShowPassword}
+                    onTouchStart={handleToggleShowPassword}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors z-20 p-2"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4 pointer-events-none" /> : <Eye className="w-4 h-4 pointer-events-none" />}
                   </button>
                 </div>
               </div>
