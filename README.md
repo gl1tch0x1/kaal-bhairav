@@ -10,6 +10,7 @@
     <a href="#system-architecture">Architecture</a> •
     <a href="#technology-stack">Tech Stack</a> •
     <a href="#module-breakdown">Modules</a> •
+    <a href="#surveillance--pairing">Surveillance & Pairing</a> •
     <a href="#installation--setup">Setup</a>
   </p>
 </div>
@@ -28,6 +29,8 @@ It provides SOC analysts, threat hunters, and cyber-intelligence professionals w
 
 - **🕸️ OSINT & Web-Check Integration:** Transparently integrated intelligence aggregation combining `web-check-api` (local network deployment) alongside crt.sh, Shodan, VirusTotal, AbuseIPDB, and AlienVault OTX with low-latency parallel fan-out queries and sub-second caching.
 - **🎥 Live Camera Intelligence Module:** Real-time CCTV streaming with multi-camera WebRTC/RTSP support, object/motion detection powered by a highly concurrent Rust processing engine.
+- **📱 Zero-Friction QR Pairing:** Connect mobile devices or drone streams directly to active camera feeds with zero credential entry required via pre-authenticated, auto-refreshing bypass tokens.
+- **🌐 Global Access Tunneling:** Integrated automated network discovery and localtunnel proxies to allow remote pairing across separate networks or cellular connections.
 - **🗺️ Advanced Threat Mapping (GIS):** Professional threat intelligence maps utilizing MapLibre and Leaflet to visualize active incidents, malware campaigns, and asset telemetry.
 - **🤖 AI Security Copilot:** A multi-LLM (OpenAI, Claude, Llama) abstraction layer capable of interpreting threat data, summarizing investigations, and guiding incident response workflows via natural language.
 - **🔌 Pluggable Architecture:** A robust plugin manager designed to dynamically load external scanners, recon modules, and custom visualization tools without modifying the core system.
@@ -95,7 +98,7 @@ graph TD
 Acts as the ingress point. It translates standard REST and WebSocket requests from the frontend into highly optimized synchronous **gRPC** calls to the backend microservices. Handles robust rate limiting (to prevent brute force/DDoS attacks), global authentication decoding, Redis caching for heavy workloads (like AI analysis), and WebSocket hub routing.
 
 ### 2. Message Broker (NATS JetStream)
-Facilitates asynchronous, event-driven communication across the platform. Handles massive broadcast events like `scan.completed`, `ioc.matched`, or `camera.motion_detected` enabling the microservices to remain deeply decoupled and independently scalable.
+Facates asynchronous, event-driven communication across the platform. Handles massive broadcast events like `scan.completed`, `ioc.matched`, or `camera.motion_detected` enabling the microservices to remain deeply decoupled and independently scalable.
 
 ### 3. Polyglot Microservices
 Each service is built using the most appropriate language for its domain:
@@ -106,10 +109,26 @@ Each service is built using the most appropriate language for its domain:
 
 ---
 
+## 📱 Surveillance & Pairing Mechanics
+
+To support mobile surveillance displays, field monitoring, and drone telemetry overlays, the platform provides a **Stream Pairing** utility.
+
+### Auto-Discovered Network Ingress
+- **LAN Routing:** The platform automatically queries its active network adapters (WLAN, Ethernet, Wi-Fi) on startup via `/api/host-ip` to fetch your computer's local IP address (e.g. `192.168.100.128`), bypassing loopback (`localhost`) issues on external devices.
+- **Global Tunneling:** To support connections from separate networks or cellular connections, a built-in public proxy agent (`scripts/start-tunnel.js`) generates secure external links (e.g. `https://long-bags-agree.loca.lt`) without locking configuration files.
+
+### Token-Based Zero-Friction Login
+Scanning the generated QR code logs external devices in instantly:
+1. **Dynamic Bypass Token:** The platform signs a short-lived (5-minute expiration) temporary token for the authenticated user.
+2. **Auto-Refresh Loop:** To prevent code timeouts on active monitors, the client automatically requests a fresh token every 4 minutes.
+3. **Bypass Verification (`/api/auth/bypass`):** When scanned, the device requests the bypass handler. The server validates the temporary token, generates a persistent 24-hour cookie, and drops it on the phone before redirecting directly to the CCTV feeds.
+
+---
+
 ## 🛠️ Technology Stack
 
 ### Frontend
-- **Framework:** Next.js 15 (App Router) + React 19
+- **Framework:** Next.js 16 (App Router) + React 19
 - **State Management:** Zustand, @tanstack/react-query
 - **Styling & Animation:** Tailwind CSS v4, Framer Motion
 - **Visuals:** Recharts, React-Leaflet, AG Grid
@@ -123,7 +142,7 @@ Each service is built using the most appropriate language for its domain:
 - **Message Broker:** NATS JetStream
 - **Databases:** MongoDB (Primary Data), Redis (Caching & Sessions)
 - **Containerization:** Docker & Docker Compose
-- **Observability:** Prometheus, Grafana, OpenTelemetry (Planned)
+- **Routing Protection:** Next.js 16 Network Proxy (`proxy.ts`)
 
 ---
 
@@ -132,6 +151,8 @@ Each service is built using the most appropriate language for its domain:
 ```text
 advanced-mern-osint-application/
 ├── src/                    # Next.js Frontend App (UI, Components, Hooks, API routes)
+│   ├── app/                # App Router pages and proxy.ts route handlers
+│   └── components/         # Dashboard UI modules (Surveillance, Analytics, Map)
 ├── gateway/                # Fastify API Gateway (REST -> gRPC bridge)
 ├── user-service/           # Node.js Identity & RBAC Service (Mongoose aligned)
 ├── asset-service/          # Go Service: Real-time Multi-source OSINT Aggregator
@@ -139,6 +160,7 @@ advanced-mern-osint-application/
 ├── ai-copilot-service/     # Python Service: LLM Abstraction & Chat
 ├── proto/                  # Shared Protobuf definitions (Single source of truth)
 ├── scripts/                # Utility and Database Seeding Scripts
+│   └── start-tunnel.js     # Public localtunnel controller
 ├── docker-compose.yml      # Core infrastructure orchestration
 └── README.md               # System Documentation
 ```
@@ -186,7 +208,14 @@ ABUSEIPDB_API_KEY=
 OTX_API_KEY=
 ```
 
-### 3. Spin Up Core Infrastructure
+### 3. Expose Server Globally (Optional)
+If you want to allow external mobile phones/drones on separate networks to pair with the server, run the tunnel manager in a separate terminal:
+```bash
+node scripts/start-tunnel.js
+```
+This writes the public HTTPS address to `tunnel.txt` which the platform picks up automatically to generate remote QR links.
+
+### 4. Spin Up Core Infrastructure
 Use Docker Compose to build and start the entire stack (Microservices, Gateway, NATS, Redis, MongoDB).
 ```bash
 docker compose build
@@ -194,13 +223,13 @@ docker compose up -d
 ```
 *Note: The first build will take some time as it compiles the Go, Rust, and Python stubs inside their respective containers.*
 
-### 4. Start the Frontend Application
-Run the Next.js development server:
+### 5. Start the Frontend Application
+Run the Next.js development server (configured to listen on network port `3001` and bind to all interfaces `0.0.0.0`):
 ```bash
 npm run dev
 ```
 
-The UI will be accessible at `http://localhost:3000` (or `http://localhost:3001` if port `3000` is utilized by the Grafana monitoring container). The frontend will communicate directly with the API Gateway running on port `4000` or the Go service on port `50051`.
+The UI will be accessible at `http://localhost:3001` (or your computer's LAN IP). The frontend will communicate directly with the API Gateway running on port `4000`.
 
 ---
 
@@ -208,9 +237,9 @@ The UI will be accessible at `http://localhost:3000` (or `http://localhost:3001`
 
 - [x] **Phase 1:** Core Infrastructure (gRPC, NATS, Microservice Stubs, API Gateway)
 - [x] **Phase 2:** OSINT & Web-Check Native Integration (Go aggregation engine)
-- [ ] **Phase 3:** Real-Time Camera Intelligence (RTSP/WebRTC + Rust Object Detection)
+- [x] **Phase 3:** Real-Time Camera Intelligence (RTSP/WebRTC + Rust Object Detection)
 - [x] **Phase 4:** Threat Intelligence Connectors & Background Schedulers (AbuseIPDB, OTX, VT)
-- [ ] **Phase 5:** AI Security Copilot (LLM Multi-Agent system)
+- [x] **Phase 5:** Automated Remote QR Pairing & Network Tunnel Integration
 - [ ] **Phase 6:** Production Hardening & Observability (OpenTelemetry, Signal-handling)
 
 ---
@@ -220,4 +249,3 @@ The UI will be accessible at `http://localhost:3000` (or `http://localhost:3001`
 This project is intended for educational, demonstrative, and defensive security purposes. Users are strictly responsible for adhering to applicable laws and regulations when using OSINT and scanning tools against external infrastructure.
 
 <p align="center">Developed with 💻 & ☕ for the Cyber Intelligence Community.</p>
-
