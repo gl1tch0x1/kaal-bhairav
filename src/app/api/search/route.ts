@@ -135,3 +135,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const auth = await getSession();
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await connectDB();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const all = searchParams.get("all");
+
+    if (all === "true") {
+      const result = await SearchHistory.deleteMany({ userId: auth.userId });
+      return NextResponse.json({ success: true, deleted: result.deletedCount, type: "all" });
+    }
+
+    if (id) {
+      const result = await SearchHistory.findOneAndDelete({ _id: id, userId: auth.userId });
+      if (!result) {
+        return NextResponse.json({ error: "History item not found" }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, deleted: 1, type: "single" });
+    }
+
+    return NextResponse.json({ error: "Provide ?id=<id> or ?all=true" }, { status: 400 });
+  } catch (error) {
+    console.error("Delete history error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
