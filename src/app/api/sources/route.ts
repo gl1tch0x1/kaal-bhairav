@@ -444,6 +444,16 @@ const SEED_SOURCES = [
     icon: "🤖",
     docs: "https://www.robtex.com/",
   },
+  {
+    name: "Dropbase Leak Database",
+    category: "Breach",
+    status: "online",
+    latency: "250ms",
+    lastChecked: new Date().toISOString(),
+    description: "Highly comprehensive leaked credential database search engine, auditing credentials and records in parallel via X-Api-Key headers.",
+    icon: "💧",
+    docs: "https://dropbase.fun/",
+  },
 ];
 
 export async function GET() {

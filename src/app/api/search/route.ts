@@ -103,6 +103,49 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Call Dropbase.fun Leak API if searching for email or domain
+    const DROPBASE_API_KEY = process.env.DROPBASE_API_KEY || "db_live_0b937b38e7da13d1e232ad95aa5ed3de9162dc4d806e5688";
+    if (queryType === "email" || queryType === "domain" || queryType === "general" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(query)) {
+      try {
+        const dropbaseRes = await fetch("https://dropbase.fun/api/v1/search", {
+          method: "POST",
+          headers: {
+            "X-Api-Key": DROPBASE_API_KEY,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            criteria: [
+              { col: queryType === "email" || query.includes("@") ? "email" : "domain", val: query }
+            ]
+          }),
+          signal: AbortSignal.timeout(8000)
+        });
+        
+        if (dropbaseRes.ok) {
+          const dropbaseData = await dropbaseRes.json();
+          if (dropbaseData && dropbaseData.success && Array.isArray(dropbaseData.records)) {
+            const dropbaseResults = dropbaseData.records.map((rec: any, idx: number) => ({
+              source: "Dropbase Leak Database",
+              queryType: queryType || "email",
+              query,
+              category: "breach",
+              severity: "high",
+              title: `Dropbase Record: Leak found in database ${rec.database || "Unknown"}`,
+              snippet: `Exposed password/hash: ${rec.password || "Encrypted/Hidden"}. Username: ${rec.username || "—"}. Source Domain: ${rec.domain || "—"}. IP Address: ${rec.ip || "—"}.`,
+              url: "https://dropbase.fun/",
+              riskScore: 85,
+              tags: ["breach", "dropbase", "leaked-credentials"],
+              fetchedAt: new Date().toISOString(),
+              data: rec
+            }));
+            results = [...dropbaseResults, ...results];
+          }
+        }
+      } catch (dropbaseErr) {
+        console.warn("[search] Dropbase API query failed:", dropbaseErr);
+      }
+    }
+
     // Enrich results with simulated premium sources (VirusTotal, Shodan, AbuseIPDB, OTX, crt.sh) if keys are missing
     results = enrichResults(query, queryType || "general", results);
 
