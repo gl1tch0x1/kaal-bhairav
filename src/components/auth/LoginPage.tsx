@@ -42,17 +42,17 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const endpoint = "/api/auth/login";
-      const body = { username: form.username, password: form.password };
-
-      const res = await fetch(endpoint, {
+      // Run standard login authentication via gateway
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          username: form.username,
+          password: form.password,
+        }),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.error || "Authentication failed");
         return;
@@ -79,7 +79,6 @@ export default function LoginPage() {
 
       {/* LEFT PANEL - Kaal Bhairav (Aggressive Focal Design) */}
       <div className="hidden lg:flex lg:w-[55%] relative flex-col items-center justify-center overflow-hidden">
-
         {/* Injected Thunder Animation Styles */}
         <style dangerouslySetInnerHTML={{
           __html: `
@@ -137,19 +136,10 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Aggressive Title Overlay positioned slightly over the bottom of the image */}
+          {/* Aggressive Title Overlay */}
           <div className="absolute bottom-16 text-center z-20">
-            {/* <h1
-              className="text-6xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-b from-white via-red-500 to-red-900 drop-shadow-[0_5px_5px_rgba(0,0,0,1)] uppercase"
-              style={{ fontFamily: "'Cinzel', serif" }}
-            >
-              KAAL BHAIRAV
-            </h1> */}
             <div className="flex items-center justify-center gap-4 mt-4">
               <div className="w-24 h-1 bg-gradient-to-r from-transparent to-red-600" />
-              {/* <p className="text-red-500 text-sm tracking-[0.5em] font-bold uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
-                ABSOLUTE DOMINANCE
-              </p> */}
               <div className="w-24 h-1 bg-gradient-to-l from-transparent to-red-600" />
             </div>
           </div>
@@ -206,8 +196,6 @@ export default function LoginPage() {
                 SYSTEM SECURE · ENCRYPTION ACTIVE · AES-256
               </span>
             </div>
-
-            {/* Authentication Form */}
 
             {/* Error */}
             {error && (

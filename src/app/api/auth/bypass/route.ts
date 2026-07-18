@@ -39,11 +39,15 @@ export async function GET(req: NextRequest) {
 
   const isProduction = process.env.NODE_ENV === "production";
   const isHttps = req.nextUrl.protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
+  const isTunnel = req.headers.get("host")?.includes("tunnelmole.net") || 
+                   req.headers.get("host")?.includes("loca.lt") ||
+                   req.headers.get("host")?.includes("trycloudflare") ||
+                   req.headers.get("host")?.includes("ngrok");
 
   response.cookies.set("osint_token", sessionToken, {
     httpOnly: true,
-    secure: isProduction || isHttps,
-    sameSite: "strict", // Hardened SameSite rule
+    secure: isProduction || isHttps || !!isTunnel,
+    sameSite: "lax", // Lax SameSite to support mobile cross-site and redirection flows
     maxAge: 60 * 60 * 24, // 24 hours persistent cookie
     path: "/",
   });

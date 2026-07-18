@@ -61,6 +61,9 @@ services:
       - mongodb
       - nats
       - redis
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/osint
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./proto:/app/proto
     restart: unless-stopped

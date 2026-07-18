@@ -115,7 +115,7 @@ To support mobile surveillance displays, field monitoring, and drone telemetry o
 
 ### Auto-Discovered Network Ingress
 - **LAN Routing:** The platform automatically queries its active network adapters (WLAN, Ethernet, Wi-Fi) on startup via `/api/host-ip` to fetch your computer's local IP address (e.g. `192.168.100.128`), bypassing loopback (`localhost`) issues on external devices.
-- **Global Tunneling:** To support connections from separate networks or cellular connections, a built-in public proxy agent (`scripts/start-tunnel.js`) generates secure external links (e.g. `https://long-bags-agree.loca.lt`) without locking configuration files.
+- **Global Tunneling:** To support connections from separate networks or cellular connections, a built-in public proxy agent (`scripts/start-tunnel.js`) generates secure external links (using **Tunnelmole** with a fallback to **Localtunnel** e.g., `https://*.tunnelmole.net`) without locking configuration files.
 
 ### Token-Based Zero-Friction Login
 Scanning the generated QR code logs external devices in instantly:
@@ -245,7 +245,7 @@ OTX_API_KEY=
 ```
 
 ### 3. Expose Server Globally (Optional)
-If you want to allow external mobile phones/drones on separate networks to pair with the server, run the tunnel manager in a separate terminal:
+If you want to allow external mobile phones/drones on separate networks to pair with the server, run the tunnel manager in a separate terminal (this uses **Tunnelmole** to expose the port, falling back to **Localtunnel** if needed):
 ```bash
 node scripts/start-tunnel.js
 ```
