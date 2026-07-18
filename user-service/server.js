@@ -37,8 +37,26 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
+// Helper to verify shared inter-service secret in gRPC metadata
+function checkAuthMetadata(call) {
+  try {
+    const auths = call.metadata.get('authorization');
+    if (auths && auths.length > 0 && auths[0] === `Bearer ${JWT_SECRET}`) {
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
 // 4. Implement gRPC Methods
 async function authenticate(call, callback) {
+  if (!checkAuthMetadata(call)) {
+    return callback({
+      code: grpc.status.UNAUTHENTICATED,
+      details: 'Missing or invalid inter-service authentication token'
+    });
+  }
+
   const { username, password } = call.request;
   console.log(`[gRPC] Authenticate Request: ${username}`);
   
@@ -56,19 +74,6 @@ async function authenticate(call, callback) {
           isActive: true
         });
         console.log(`[gRPC] Auto-created default admin user`);
-      } else {
-        const storedPassword = user.password || user.passwordHash;
-        if (storedPassword) {
-          const isValid = await bcrypt.compare('admin', storedPassword);
-          if (!isValid) {
-            user.password = hash;
-            if (user.passwordHash) {
-              user.passwordHash = hash;
-            }
-            await user.save();
-            console.log(`[gRPC] Reset existing admin user password to default 'admin'`);
-          }
-        }
       }
     }
 
@@ -96,6 +101,13 @@ async function authenticate(call, callback) {
 
 
 async function validateToken(call, callback) {
+  if (!checkAuthMetadata(call)) {
+    return callback({
+      code: grpc.status.UNAUTHENTICATED,
+      details: 'Missing or invalid inter-service authentication token'
+    });
+  }
+
   const { token } = call.request;
   try {
     const decoded = jwt.verify(token, JWT_SECRET);

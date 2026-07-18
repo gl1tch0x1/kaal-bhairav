@@ -305,6 +305,30 @@ The UI will be accessible at `http://localhost:3001` (or your computer's LAN IP)
 
 ---
 
+## 🔒 Security Hardening & Zero-Trust Architecture
+
+To safeguard threat intelligence, CCTV surveillance streams, and user access records, Kaal Bhairav implements a comprehensive **Zero-Trust & Hardened Security Model**:
+
+### 1. Inter-Service gRPC Authentication (mTLS / Shared Secrets)
+To prevent unauthorized containers on the network from accessing or tampering with internal microservices, all internal gRPC calls (Node API Gateway → User / Camera / AI services) enforce metadata signature checks.
+- **Shared Secret Signature:** The API Gateway injects a `Bearer <JWT_SECRET>` header into the outbound gRPC metadata.
+- **Microservice Enforcement:** The **Node.js User Service**, **Python AI Copilot Service**, and **Rust Camera Service** inspect incoming metadata headers. Any request lacking a valid matching signature is rejected with a `Status.UNAUTHENTICATED` error code.
+
+### 2. API Gateway Ingress Authorization
+Protected HTTP endpoints on the Fastify API Gateway (`port 4000`) are secured against unauthenticated access:
+- **Auth Hook:** The `/api/camera/:id/stream` and `/api/ai/analyze` routes utilize a Fastify `preHandler` hook.
+- **Token Verification:** The hook extracts the token from the `Authorization: Bearer <token>` header or `osint_token` cookie and calls `userClient.ValidateToken` to check session validity. Unauthenticated requests are rejected with `401 Unauthorized` before reaching microservices.
+
+### 3. Safe Administrative User Seeding
+Default admin credentials (`admin`/`admin`) are seeded securely:
+- **One-time Seed:** Seeding occurs safely once during MongoDB initialization if no admin user is present.
+- **Backdoor Removal:** Removed legacy logic that reset the administrator's password back to the default `admin` hash upon check-failure. Administrative passwords, once changed by the user in settings, remain immutable.
+
+### 4. Hardened Cookie Policy
+- Enforces `httpOnly: true`, environment-aware `secure: true` (activated under production environments or active Tunnelmole/Localtunnel HTTPS proxy URLs), and `sameSite: "lax"` to support mobile cross-site redirection and drone telemetry streams safely.
+
+---
+
 ## 📅 Roadmap & Evolution
 
 - [x] **Phase 1:** Core Infrastructure (gRPC, NATS, Microservice Stubs, API Gateway)

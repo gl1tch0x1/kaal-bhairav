@@ -48,6 +48,7 @@ services:
       - redis
     environment:
       - REDIS_HOST=kb-redis
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./proto:/app/proto
     restart: unless-stopped
@@ -96,6 +97,8 @@ services:
     container_name: kb-ai-copilot-service
     depends_on:
       - nats
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./proto:/app/proto
     restart: unless-stopped
@@ -107,6 +110,8 @@ services:
     container_name: kb-camera-service
     depends_on:
       - nats
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./proto:/app/proto
     restart: unless-stopped

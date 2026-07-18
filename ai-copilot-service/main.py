@@ -9,9 +9,20 @@ from grpc_tools import protoc  # type: ignore
 import ai_copilot_pb2  # type: ignore
 import ai_copilot_pb2_grpc  # type: ignore
 
+# Helper to verify shared inter-service secret in gRPC metadata
+def check_auth(context):
+    metadata = dict(context.invocation_metadata())
+    auth = metadata.get('authorization', '')
+    jwt_secret = os.environ.get('JWT_SECRET', '')
+    if not jwt_secret:
+        return
+    if auth != f"Bearer {jwt_secret}":
+        context.abort(grpc.StatusCode.UNAUTHENTICATED, 'Missing or invalid inter-service authentication token')
+
 # 3. Implement the Servicer
 class AICopilotService(ai_copilot_pb2_grpc.AICopilotServiceServicer):
     def AnalyzeThreat(self, request, context):
+        check_auth(context)
         print(f"[gRPC] Analyzing threat for query: {request.query}")
         # Stub logic
         return ai_copilot_pb2.ThreatAnalysisResponse(
@@ -21,6 +32,7 @@ class AICopilotService(ai_copilot_pb2_grpc.AICopilotServiceServicer):
         )
 
     def CorrelateData(self, request, context):
+        check_auth(context)
         print(f"[gRPC] Correlating data for {len(request.entity_ids)} entities")
         return ai_copilot_pb2.CorrelationResponse(
             correlation_graph_data='{"nodes":[], "links":[]}',

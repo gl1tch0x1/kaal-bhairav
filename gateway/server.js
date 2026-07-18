@@ -24,6 +24,51 @@ function loadProto(filename, serviceName, envUrl, defaultUrl) {
   return new service(url, grpc.credentials.createInsecure());
 }
 
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  fastify.log.error("CRITICAL SECURITY ERROR: JWT_SECRET environment variable is not defined in API Gateway!");
+  process.exit(1);
+}
+
+// Helper to generate gRPC Metadata with inter-service shared secret
+function getAuthMetadata() {
+  const meta = new grpc.Metadata();
+  meta.add('authorization', `Bearer ${JWT_SECRET}`);
+  return meta;
+}
+
+// Authentication middleware hook for protected Gateway HTTP endpoints
+const checkUserAuth = async (request, reply) => {
+  const authHeader = request.headers['authorization'];
+  let token = null;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  } else {
+    const cookieHeader = request.headers['cookie'];
+    if (cookieHeader) {
+      const match = cookieHeader.match(/osint_token=([^;]+)/);
+      if (match) token = match[1];
+    }
+  }
+
+  if (!token) {
+    reply.code(401).send({ error: 'Unauthorized: missing session token' });
+    throw new Error('Unauthorized');
+  }
+
+  return new Promise((resolve, reject) => {
+    userClient.ValidateToken({ token }, getAuthMetadata(), (error, response) => {
+      if (error || !response.valid) {
+        reply.code(401).send({ error: 'Unauthorized: invalid or expired session token' });
+        return reject(new Error('Unauthorized'));
+      }
+      request.user = { id: response.user_id, role: response.role };
+      resolve();
+    });
+  });
+};
+
 const userClient = loadProto('user.proto', 'UserService', 'USER_SERVICE_URL', 'user-service:50051');
 const cameraClient = loadProto('camera.proto', 'CameraService', 'CAMERA_SERVICE_URL', 'camera-service:50052');
 const aiClient = loadProto('ai_copilot.proto', 'AICopilotService', 'AI_SERVICE_URL', 'ai-copilot-service:50053');
@@ -38,7 +83,7 @@ fastify.get('/health', async (request, reply) => {
 fastify.post('/api/auth/login', async (request, reply) => {
   const { username, password } = request.body;
   return new Promise((resolve, reject) => {
-    userClient.Authenticate({ username, password }, (error, response) => {
+    userClient.Authenticate({ username, password }, getAuthMetadata(), (error, response) => {
       if (error || !response.success) {
         fastify.log.error(error || response.message);
         reply.code(401).send({ error: response?.message || 'Authentication failed' });
@@ -57,9 +102,9 @@ fastify.post('/api/auth/login', async (request, reply) => {
   });
 });
 
-fastify.get('/api/camera/:id/stream', async (request, reply) => {
+fastify.get('/api/camera/:id/stream', { preHandler: checkUserAuth }, async (request, reply) => {
   return new Promise((resolve, reject) => {
-    cameraClient.GetCameraStream({ camera_id: request.params.id }, (error, response) => {
+    cameraClient.GetCameraStream({ camera_id: request.params.id }, getAuthMetadata(), (error, response) => {
       if (error) { reply.code(500).send({ error: error.message }); return reject(error); }
       reply.send(response);
       resolve();
@@ -67,7 +112,7 @@ fastify.get('/api/camera/:id/stream', async (request, reply) => {
   });
 });
 
-fastify.post('/api/ai/analyze', async (request, reply) => {
+fastify.post('/api/ai/analyze', { preHandler: checkUserAuth }, async (request, reply) => {
   const { query, query_type } = request.body;
   
   const cacheKey = `ai_analyze:${query}`;
@@ -79,7 +124,7 @@ fastify.post('/api/ai/analyze', async (request, reply) => {
   }
 
   return new Promise((resolve, reject) => {
-    aiClient.AnalyzeThreat({ query, query_type, investigation_id: 'N/A' }, async (error, response) => {
+    aiClient.AnalyzeThreat({ query, query_type, investigation_id: 'N/A' }, getAuthMetadata(), async (error, response) => {
       if (error) { reply.code(500).send({ error: error.message }); return reject(error); }
       
       await fastify.redis.set(cacheKey, JSON.stringify(response), 'EX', 600); // Cache for 10 minutes
