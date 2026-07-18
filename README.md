@@ -340,8 +340,39 @@ Default admin credentials (`admin`/`admin`) are seeded securely:
 
 ---
 
+---
+
+## ⚖️ Rules, Regulations, & Ethical Conduct
+
+The use of the Kaal Bhairav OSINT platform must align with ethical hacking guidelines and defensive operations. Users are strictly bound by the following rules and regulations:
+
+### 1. Authorized Scanning Only
+- Do not perform scanning, crawling, passive reconnaissance, or active vulnerability auditing against targets (domains, IPs, emails, or phone numbers) without explicit, documented authorization from the target owner.
+- Users assume all legal responsibility for API query targets searched using external connectors (such as Shodan, VirusTotal, Censys, and AbuseIPDB).
+
+### 2. Live Camera Surveillance Regulations
+- The pairing of cameras, mobile devices, and drone overlays must comply with local privacy laws and visual recording consents.
+- Unmonitored public recording or pairing of unauthorized public surveillance nodes is strictly prohibited. Enforce security configurations to prevent access leakages.
+
+### 3. Breach Data Management
+- Breach data fetched via APIs (such as HaveIBeenPwned, LeakLookup, and Dehashed) contains sensitive, personally identifiable information (PII). 
+- Analysts must handle this data in a secure, confidential manner. Do not export, distribute, or retain leaked credential records beyond authorized session windows.
+
+---
+
+## 📄 Code of Conduct & Contributions
+
+We promote an inclusive, respectful, and legally compliant collaborative environment. Contributors are expected to follow the guidelines detailed in the [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) file.
+Key contributor rules:
+- Adhere strictly to the security reporting guidelines. Do not submit code containing bypass mechanisms or telemetry callbacks.
+- All contributions must preserve the codebase's zero-trust security configuration (JWT checks, mTLS gRPC signatures, rate limit caps).
+
+---
+
 ## 📝 License
 
-This project is intended for educational, demonstrative, and defensive security purposes. Users are strictly responsible for adhering to applicable laws and regulations when using OSINT and scanning tools against external infrastructure.
+This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for the full copyright and permission notice.
+
+> **Disclaimer:** This software is provided for educational, training, and defensive security auditing purposes. The developers and contributors assume no liability for misuse, unauthorized footprinting, or target infrastructure damage caused by deploying this platform.
 
 <p align="center">Developed with 💻 & ☕ for the Cyber Intelligence Community.</p>
