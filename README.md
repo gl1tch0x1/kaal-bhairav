@@ -107,6 +107,42 @@ Each service is built using the most appropriate language for its domain:
 - **Python (`ai-copilot-service`)**: Leverages the rich AI/ML and data-science ecosystems for language models, anomaly detection, and intelligence feed parsing. Compiles protobuf specs at build time for optimal start-up times.
 - **Node.js (`user-service`, `gateway`)**: Manages identity, RBAC, session management, and orchestrates frontend requests.
 
+### 4. gRPC Communication Specifications
+All core microservices communicate over HTTP/2 using gRPC interfaces defined in the `/proto` directory:
+* **`UserService` (`user.proto`)**: Exposes `Authenticate` and `ValidateToken` endpoints. The Fastify API Gateway utilizes this service to exchange and sign tokens.
+* **`CameraService` (`camera.proto`)**: Exposes RTSP stream configurations, camera listings, stream frame coordinates, and analytics status.
+* **`AICopilotService` (`ai_copilot.proto`)**: Handles threat logic and queries via `AnalyzeThreat`.
+
+### 5. NATS JetStream Event Stream Topology
+The services utilize NATS JetStream as an asynchronous event message broker to process events concurrently:
+* **`auth.login_event`**: Published by the API Gateway when a user logs in. Subscribed to by security logging microservices to audit access.
+* **`camera.motion_detected`**: Published by the Rust `camera-service` when motion is detected in real-time streams. The Next.js server listens to this topic and pushes SSE (Server-Sent Events) notifications to active security monitors.
+* **`threat.ioc_matched`**: Published by the Go `asset-service` when a high-reputation threat vector or malicious IP is matched during threat hunting.
+
+### 6. Dynamic OSINT Threat Hunting Flow
+When an analyst searches for a target IP or domain:
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Analyst as Next.js Dashboard
+    participant GoService as asset-service (Go)
+    participant Redis as Redis Cache
+    participant WebCheck as web-check-api (Local)
+    participant ThreatAPIs as External Intel (VirusTotal/Shodan/OTX)
+
+    Analyst->>GoService: GET /api/search?target=example.com
+    GoService->>Redis: Check Cache
+    alt Cache Hit
+        Redis-->>GoService: Return Cached Data
+        GoService-->>Analyst: Return Results (Sub-second)
+    else Cache Miss
+        GoService->>WebCheck: Scan DNS, WHOIS, Ports (Concurrent)
+        GoService->>ThreatAPIs: Query reputations in parallel (VT, AbuseIPDB, Shodan)
+        GoService->>Redis: Cache consolidated report (10m TTL)
+        GoService-->>Analyst: Return Consolidated Report
+    end
+```
+
 ---
 
 ## 📱 Surveillance & Pairing Mechanics
