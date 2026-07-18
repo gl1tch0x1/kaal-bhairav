@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   FolderOpen, Target, AlertTriangle, Users, Search,
   TrendingUp, Activity, Clock, Shield, Zap, Eye,
@@ -99,7 +100,16 @@ export default function DashboardHome() {
   }, []);
 
   const stats = data?.stats;
-  const monthlyData = data?.monthlyTrend?.length ? data.monthlyTrend.map((m) => ({ month: m.month, count: Number(m.count) })) : MOCK_MONTHLY;
+  const monthlyData = stats && stats.totalInvestigations > 0
+    ? (data?.monthlyTrend?.length ? data.monthlyTrend.map((m) => ({ month: m.month, count: Number(m.count) })) : MOCK_MONTHLY)
+    : [
+        { month: "Jan", count: 0 },
+        { month: "Feb", count: 0 },
+        { month: "Mar", count: 0 },
+        { month: "Apr", count: 0 },
+        { month: "May", count: 0 },
+        { month: "Jun", count: 0 },
+      ];
 
   const statCards = [
     {
@@ -110,8 +120,9 @@ export default function DashboardHome() {
       border: "border-cyan-500/20",
       iconColor: "text-cyan-400",
       iconBg: "bg-cyan-500/10",
-      change: "+12%",
+      change: "Manage all cases",
       changeUp: true,
+      href: "/dashboard/investigations",
     },
     {
       label: "Active Cases",
@@ -121,8 +132,9 @@ export default function DashboardHome() {
       border: "border-emerald-500/20",
       iconColor: "text-emerald-400",
       iconBg: "bg-emerald-500/10",
-      change: "+3 today",
+      change: "View active targets",
       changeUp: true,
+      href: "/dashboard/investigations?status=active",
     },
     {
       label: "Critical Threats",
@@ -134,6 +146,7 @@ export default function DashboardHome() {
       iconBg: "bg-red-500/10",
       change: "Needs attention",
       changeUp: false,
+      href: "/dashboard/alerts",
     },
     {
       label: "Unread Alerts",
@@ -143,8 +156,9 @@ export default function DashboardHome() {
       border: "border-amber-500/20",
       iconColor: "text-amber-400",
       iconBg: "bg-amber-500/10",
-      change: "New since login",
+      change: "Check notifications",
       changeUp: false,
+      href: "/dashboard/alerts?unread=true",
     },
     {
       label: "Total Analysts",
@@ -154,8 +168,9 @@ export default function DashboardHome() {
       border: "border-purple-500/20",
       iconColor: "text-purple-400",
       iconBg: "bg-purple-500/10",
-      change: "Team online",
+      change: "Active user roster",
       changeUp: true,
+      href: "/dashboard/settings",
     },
     {
       label: "Total Searches",
@@ -165,8 +180,9 @@ export default function DashboardHome() {
       border: "border-blue-500/20",
       iconColor: "text-blue-400",
       iconBg: "bg-blue-500/10",
-      change: "Queries run",
+      change: "Run new OSINT lookup",
       changeUp: true,
+      href: "/dashboard/search",
     },
   ];
 
@@ -204,20 +220,22 @@ export default function DashboardHome() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         {statCards.map((card) => (
-          <div
+          <Link
             key={card.label}
-            className={`stat-card rounded-xl p-4 bg-gradient-to-br ${card.color} border ${card.border} relative overflow-hidden group cursor-pointer`}
+            href={card.href}
+            className={`stat-card rounded-xl p-4 bg-gradient-to-br ${card.color} border ${card.border} relative overflow-hidden group cursor-pointer block hover:scale-[1.02] hover:border-cyan-500/40 transition-all`}
           >
             <div className="absolute top-0 right-0 w-16 h-16 rounded-bl-full opacity-20 bg-gradient-to-bl from-white/10 to-transparent" />
-            <div className={`w-8 h-8 rounded-lg ${card.iconBg} flex items-center justify-center mb-3`}>
+            <div className={`w-8 h-8 rounded-lg ${card.iconBg} flex items-center justify-center mb-3 group-hover:scale-110 transition-all`}>
               <card.icon className={`w-4 h-4 ${card.iconColor}`} />
             </div>
             <div className="text-2xl font-bold text-white tabular-nums">{card.value}</div>
             <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{card.label}</div>
-            <div className={`text-[9px] mt-1.5 font-medium ${card.changeUp ? "text-emerald-400" : "text-amber-400"}`}>
+            <div className={`text-[9px] mt-1.5 font-medium flex items-center gap-1 ${card.changeUp ? "text-emerald-400" : "text-amber-400"}`}>
               {card.change}
+              <ArrowUpRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
