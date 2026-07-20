@@ -33,7 +33,7 @@ It provides SOC analysts, threat hunters, and cyber-intelligence professionals w
 - **Advanced Threat Mapping (GIS):** Professional threat intelligence maps utilizing MapLibre and Leaflet to visualize active incidents, malware campaigns, and asset telemetry.
 - **AI Security Copilot:** A multi-LLM (OpenAI, Claude, Llama) abstraction layer capable of interpreting threat data, summarizing investigations, and guiding incident response workflows via natural language.
 - **Emergency Panic Mode:** A globally responsive UI lockdown mechanism that intercepts all application input in emergencies, requiring a custom 4-digit security PIN to unlock, preventing unauthorized physical access to intelligence feeds.
-- **🌐 Global Access Tunneling:** Integrated automated network discovery and localtunnel proxies to allow remote pairing across separate networks or cellular connections.
+- **Global Access Tunneling:** Integrated automated network discovery and localtunnel proxies to allow remote pairing across separate networks or cellular connections.
 - **Pluggable Architecture:** A robust plugin manager designed to dynamically load external scanners, recon modules, and custom visualization tools without modifying the core system.
 - **Live Threat Feed Connectors:** Ingest normalized indicators of compromise (IOCs) from MITRE ATT&CK, CVE/NVD, AbuseIPDB, MISP, and AlienVault OTX.
 - **Zero-Trust Security Model:** Implements stringent Role-Based Access Control (RBAC), stateless JWT authentication, and secure inter-service gRPC communication.
