@@ -17,7 +17,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 **Kaal Bhairav** is an industry-grade, highly scalable, and modular web application designed for Cyber Threat Intelligence (CTI), Open Source Intelligence (OSINT) gathering, network link analysis, and live surveillance monitoring. 
 
@@ -25,22 +25,22 @@ It provides SOC analysts, threat hunters, and cyber-intelligence professionals w
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-- **🕸️ OSINT & Web-Check Integration:** Transparently integrated intelligence aggregation combining `web-check-api` (local network deployment) alongside crt.sh, Shodan, VirusTotal, AbuseIPDB, and AlienVault OTX with low-latency parallel fan-out queries and sub-second caching.
-- **🎥 Live Camera Intelligence Module:** Real-time CCTV streaming with multi-camera WebRTC/RTSP support, object/motion detection powered by a highly concurrent Rust processing engine.
-- **📱 Zero-Friction QR Pairing:** Connect mobile devices or drone streams directly to active camera feeds with zero credential entry required via pre-authenticated, auto-refreshing bypass tokens.
-- **🗺️ Advanced Threat Mapping (GIS):** Professional threat intelligence maps utilizing MapLibre and Leaflet to visualize active incidents, malware campaigns, and asset telemetry.
-- **🤖 AI Security Copilot:** A multi-LLM (OpenAI, Claude, Llama) abstraction layer capable of interpreting threat data, summarizing investigations, and guiding incident response workflows via natural language.
-- **🚨 Emergency Panic Mode:** A globally responsive UI lockdown mechanism that intercepts all application input in emergencies, requiring a custom 4-digit security PIN to unlock, preventing unauthorized physical access to intelligence feeds.
-- **✨ Premium Fluid Interfaces:** Utilizes `framer-motion` for enterprise-grade micro-animations and staggered transitions, ensuring a responsive, modern SOC analyst experience while heavily optimizing rendering (`next/dynamic` deferral) to eliminate main-thread blocking on large datasets.
-- **🔌 Pluggable Architecture:** A robust plugin manager designed to dynamically load external scanners, recon modules, and custom visualization tools without modifying the core system.
-- **🛡️ Live Threat Feed Connectors:** Ingest normalized indicators of compromise (IOCs) from MITRE ATT&CK, CVE/NVD, AbuseIPDB, MISP, and AlienVault OTX.
-- **🔒 Zero-Trust Security Model:** Implements stringent Role-Based Access Control (RBAC), stateless JWT authentication, and secure inter-service gRPC communication.
+- **OSINT & Web-Check Integration:** Transparently integrated intelligence aggregation combining `web-check-api` (local network deployment) alongside crt.sh, Shodan, VirusTotal, AbuseIPDB, and AlienVault OTX with low-latency parallel fan-out queries and sub-second caching.
+- ** Live Camera Intelligence Module:** Real-time CCTV streaming with multi-camera WebRTC/RTSP support, object/motion detection powered by a highly concurrent Rust processing engine.
+- **Zero-Friction QR Pairing:** Connect mobile devices or drone streams directly to active camera feeds with zero credential entry required via pre-authenticated, auto-refreshing bypass tokens.
+- **Advanced Threat Mapping (GIS):** Professional threat intelligence maps utilizing MapLibre and Leaflet to visualize active incidents, malware campaigns, and asset telemetry.
+- **AI Security Copilot:** A multi-LLM (OpenAI, Claude, Llama) abstraction layer capable of interpreting threat data, summarizing investigations, and guiding incident response workflows via natural language.
+- **Emergency Panic Mode:** A globally responsive UI lockdown mechanism that intercepts all application input in emergencies, requiring a custom 4-digit security PIN to unlock, preventing unauthorized physical access to intelligence feeds.
+- **🌐 Global Access Tunneling:** Integrated automated network discovery and localtunnel proxies to allow remote pairing across separate networks or cellular connections.
+- **Pluggable Architecture:** A robust plugin manager designed to dynamically load external scanners, recon modules, and custom visualization tools without modifying the core system.
+- **Live Threat Feed Connectors:** Ingest normalized indicators of compromise (IOCs) from MITRE ATT&CK, CVE/NVD, AbuseIPDB, MISP, and AlienVault OTX.
+- **Zero-Trust Security Model:** Implements stringent Role-Based Access Control (RBAC), stateless JWT authentication, and secure inter-service gRPC communication.
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 Kaal Bhairav has been modernized into a distributed, event-driven polyglot microservice ecosystem to handle the immense throughput of intelligence gathering and stream processing.
 
@@ -146,7 +146,7 @@ sequenceDiagram
 
 ---
 
-## 📱 Surveillance & Pairing Mechanics
+## Surveillance & Pairing Mechanics
 
 To support mobile surveillance displays, field monitoring, and drone telemetry overlays, the platform provides a **Stream Pairing** utility.
 
@@ -183,7 +183,7 @@ sequenceDiagram
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
 - **Framework:** Next.js 16 (App Router) + React 19
@@ -204,7 +204,7 @@ sequenceDiagram
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 ```text
 advanced-mern-osint-application/
@@ -240,7 +240,7 @@ advanced-mern-osint-application/
 
 ---
 
-## ⚙️ Prerequisites
+## Prerequisites
 
 To run this platform locally for development, you will need:
 - **Node.js** `v20.x` or higher
@@ -250,7 +250,7 @@ To run this platform locally for development, you will need:
 
 ---
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### 1. Clone & Install Dependencies
 Clone the repository and install the frontend/utility dependencies:
@@ -306,7 +306,7 @@ The UI will be accessible at `http://localhost:3001` (or your computer's LAN IP)
 
 ---
 
-## 🔒 Security Hardening & Zero-Trust Architecture
+## Security Hardening & Zero-Trust Architecture
 
 To safeguard threat intelligence, CCTV surveillance streams, and user access records, Kaal Bhairav implements a comprehensive **Zero-Trust & Hardened Security Model**:
 
@@ -330,7 +330,7 @@ Default admin credentials (`admin`/`admin`) are seeded securely:
 
 ---
 
-## 📅 Roadmap & Evolution
+## Roadmap & Evolution
 
 - [x] **Phase 1:** Core Infrastructure (gRPC, NATS, Microservice Stubs, API Gateway)
 - [x] **Phase 2:** OSINT & Web-Check Native Integration (Go aggregation engine)
@@ -343,7 +343,7 @@ Default admin credentials (`admin`/`admin`) are seeded securely:
 
 ---
 
-## ⚖️ Rules, Regulations, & Ethical Conduct
+## Rules, Regulations, & Ethical Conduct
 
 The use of the Kaal Bhairav OSINT platform must align with ethical hacking guidelines and defensive operations. Users are strictly bound by the following rules and regulations:
 
@@ -361,7 +361,7 @@ The use of the Kaal Bhairav OSINT platform must align with ethical hacking guide
 
 ---
 
-## 📄 Code of Conduct & Contributions
+## Code of Conduct & Contributions
 
 We promote an inclusive, respectful, and legally compliant collaborative environment. Contributors are expected to follow the guidelines detailed in the [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) file.
 Key contributor rules:
@@ -370,10 +370,10 @@ Key contributor rules:
 
 ---
 
-## 📝 License
+## License
 
 This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for the full copyright and permission notice.
 
 > **Disclaimer:** This software is provided for educational, training, and defensive security auditing purposes. The developers and contributors assume no liability for misuse, unauthorized footprinting, or target infrastructure damage caused by deploying this platform.
 
-<p align="center">Developed with 💻 & ☕ for the Cyber Intelligence Community.</p>
+<p align="center">Developed by MrAashish0x1</p>
