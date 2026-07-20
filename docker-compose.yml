@@ -79,7 +79,7 @@ services:
       - redis
       - webcheck-api
     environment:
-      - WEBCHECK_API_URL=http://kb-webcheck:8080
+      - WEBCHECK_API_URL=http://kb-webcheck:3000
       - REDIS_URL=redis://kb-redis:6379
       - SHODAN_API_KEY=${SHODAN_API_KEY:-}
       - VT_API_KEY=${VT_API_KEY:-}

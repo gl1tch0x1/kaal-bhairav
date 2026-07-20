@@ -81,8 +81,10 @@ export default function CameraPage() {
       }
 
       if (bypassToken) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLinkUrl(`${base}/api/auth/bypass?id=${encodeURIComponent(bypassToken)}`);
       } else {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLinkUrl(`${base}/dashboard/surveillance`);
       }
     }

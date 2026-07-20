@@ -19,6 +19,8 @@ export default function SettingsPage() {
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
   const [secError, setSecError] = useState("");
   const [secSuccess, setSecSuccess] = useState("");
+  const [panicPin, setPanicPin] = useState("");
+  const [panicPinSaved, setPanicPinSaved] = useState(false);
 
   const handlePasswordUpdate = async () => {
     setSecError(""); setSecSuccess("");
@@ -46,6 +48,10 @@ export default function SettingsPage() {
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((d) => { if (d.user) setUser(d.user); });
+      
+    if (typeof window !== "undefined") {
+      setPanicPin(localStorage.getItem("panicPin") || "");
+    }
   }, []);
 
   const handleSave = () => {
@@ -189,6 +195,45 @@ export default function SettingsPage() {
                   <button className="px-4 py-2 rounded-xl border border-cyan-500/30 text-cyan-400 text-xs hover:bg-cyan-500/10 transition-all">
                     Enable
                   </button>
+                </div>
+              </div>
+
+              <div className="border-t border-red-500/30 pt-5">
+                <h4 className="text-sm font-bold text-red-500 mb-3 flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  PANIC MODE CONFIGURATION
+                </h4>
+                <div className="px-4 py-4 rounded-xl bg-red-500/5 border border-red-500/20">
+                  <p className="text-xs text-slate-400 mb-4">
+                    Configure a 4-digit security code. When Panic Mode is triggered, the interface will lock completely until this code is entered. Three incorrect attempts will result in a hard freeze.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      maxLength={4}
+                      value={panicPin}
+                      onChange={(e) => setPanicPin(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="••••"
+                      className="w-24 input-dark px-4 py-2.5 rounded-xl text-center text-lg tracking-[0.5em] focus:border-red-500 transition-colors"
+                    />
+                    <button
+                      onClick={() => {
+                        if (panicPin.length === 4) {
+                          localStorage.setItem("panicPin", panicPin);
+                          setPanicPinSaved(true);
+                          setTimeout(() => setPanicPinSaved(false), 2000);
+                        }
+                      }}
+                      disabled={panicPin.length !== 4}
+                      className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        panicPinSaved
+                          ? "bg-emerald-600 text-white"
+                          : "bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 disabled:opacity-50"
+                      }`}
+                    >
+                      {panicPinSaved ? "Saved!" : "Set Code"}
+                    </button>
+                  </div>
                 </div>
               </div>
 

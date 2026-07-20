@@ -514,7 +514,10 @@ export default function TargetsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchTargets(); }, [fetchTargets]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchTargets();
+  }, [fetchTargets]);
 
   const filtered = useMemo(() =>
     targets.filter(t => {

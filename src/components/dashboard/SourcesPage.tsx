@@ -62,7 +62,10 @@ export default function SourcesPage() {
     }
   }, []);
 
-  useEffect(() => { fetchSources(); }, [fetchSources]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchSources();
+  }, [fetchSources]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);

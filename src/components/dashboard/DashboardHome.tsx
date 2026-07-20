@@ -10,6 +10,7 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
+import { motion } from "framer-motion";
 import { timeAgo, getSeverityColor, getStatusColor } from "@/lib/utils";
 
 interface Stats {
@@ -218,13 +219,30 @@ export default function DashboardHome() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        {statCards.map((card) => (
-          <Link
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.05 }
+          }
+        }}
+        className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"
+      >
+        {statCards.map((card, idx) => (
+          <motion.div
             key={card.label}
-            href={card.href}
-            className={`stat-card rounded-xl p-4 bg-gradient-to-br ${card.color} border ${card.border} relative overflow-hidden group cursor-pointer block hover:scale-[1.02] hover:border-cyan-500/40 transition-all`}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 }
+            }}
           >
+            <Link
+              href={card.href}
+              className={`stat-card rounded-xl p-4 bg-gradient-to-br ${card.color} border ${card.border} relative overflow-hidden group cursor-pointer block hover:scale-[1.02] hover:border-cyan-500/40 transition-all h-full`}
+            >
             <div className="absolute top-0 right-0 w-16 h-16 rounded-bl-full opacity-20 bg-gradient-to-bl from-white/10 to-transparent" />
             <div className={`w-8 h-8 rounded-lg ${card.iconBg} flex items-center justify-center mb-3 group-hover:scale-110 transition-all`}>
               <card.icon className={`w-4 h-4 ${card.iconColor}`} />
@@ -235,9 +253,10 @@ export default function DashboardHome() {
               {card.change}
               <ArrowUpRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-          </Link>
+            </Link>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

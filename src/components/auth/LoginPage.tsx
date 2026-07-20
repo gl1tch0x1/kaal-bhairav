@@ -20,6 +20,7 @@ export default function LoginPage() {
       const params = new URLSearchParams(window.location.search);
       const fromParam = params.get("from");
       if (fromParam) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFrom(fromParam);
       }
     }

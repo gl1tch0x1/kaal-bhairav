@@ -69,11 +69,18 @@ export default function Topbar() {
 
       {/* Right: Status & User */}
       <div className="flex items-center gap-2">
-        {/* Threat level indicator */}
-        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <Zap className="w-3 h-3 text-amber-400" />
-          <span className="text-[10px] font-semibold text-amber-400 tracking-wider">ELEVATED</span>
-        </div>
+        {/* Threat level indicator & Panic Button */}
+        <button
+          onClick={() => {
+            localStorage.setItem("isLocked", "true");
+            window.dispatchEvent(new Event("panic-mode-toggled"));
+          }}
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer group"
+          title="Trigger Emergency Lockdown"
+        >
+          <Zap className="w-3 h-3 text-red-400 group-hover:animate-pulse" />
+          <span className="text-[10px] font-bold text-red-400 tracking-widest uppercase">PANIC MODE</span>
+        </button>
 
         {/* Alerts Bell */}
         <button
